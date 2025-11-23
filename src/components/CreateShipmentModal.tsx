@@ -1,11 +1,20 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useApp } from '@/context/AppContext';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useApp } from "@/context/AppContext";
+import { toast } from "sonner";
+
+// keep using your existing supabase client
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreateShipmentModalProps {
   open: boolean;
@@ -13,55 +22,98 @@ interface CreateShipmentModalProps {
 }
 
 const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) => {
-  const { user, addShipment } = useApp();
+  // NOTE: we now destructure fetchShipments from context and use it after insert
+  const { user, fetchShipments } = useApp();
+
+  const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
-    productName: '',
-    quantity: '',
-    unit: 'kg',
-    origin: '',
-    referenceId: '',
-    notes: '',
-    criterionName: 'Moisture Content',
+    productName: "",
+    quantity: "",
+    unit: "kg",
+    origin: "",
+    referenceId: "",
+    notes: "",
+    criterionName: "Moisture Content",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const resetForm = () =>
+    setFormData({
+      productName: "",
+      quantity: "",
+      unit: "kg",
+      origin: "",
+      referenceId: "",
+      notes: "",
+      criterionName: "Moisture Content",
+    });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.productName || !formData.quantity || !formData.origin || !formData.referenceId) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
-    if (!user) {
-      toast.error('You must be logged in');
-      return;
+    setLoading(true);
+
+    try {
+      // Ensure we use the Supabase auth user (UUID) for exporter_id
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) {
+        console.error("Failed to get supabase auth user:", authError);
+        toast.error("Unable to fetch authenticated user. Please login again.");
+        setLoading(false);
+        return;
+      }
+      const supaUser = authData?.user;
+      if (!supaUser) {
+        toast.error("You must be logged in to create a shipment");
+        setLoading(false);
+        return;
+      }
+
+      const insertPayload: Record<string, any> = {
+        product_name: formData.productName,
+        quantity: Number(formData.quantity),
+        unit: formData.unit,
+        origin: formData.origin,
+        reference_id: formData.referenceId,
+        notes: formData.notes || null,
+        status: "Pending Inspection",
+        exporter_id: supaUser.id, // use Supabase auth UUID
+        quality_criteria: { name: formData.criterionName },
+      };
+
+      const { data, error } = await (supabase as any)
+        .from("shipments")
+        .insert(insertPayload)
+        .select("*")
+        .single();
+
+      if (error) throw error;
+      if (!data) throw new Error("No data returned from Supabase after insert.");
+
+      const row: any = data;
+
+      // After successful insert, refresh shipments from DB so dashboard reflects changes.
+      // We prefer re-fetching to avoid TypeScript shape mismatches between DB rows and
+      // your app's Shipment type (addShipment in context expects Omit<Shipment,'id'|'createdAt'>).
+      if (fetchShipments) {
+        await fetchShipments();
+      }
+
+      toast.success("Shipment created & saved to Supabase!");
+      resetForm();
+      onOpenChange(false);
+    } catch (err: any) {
+      console.error("Shipment creation error:", err);
+      const message = err?.message || (err?.error_description ?? "Failed to create shipment");
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
-
-    addShipment({
-      productName: formData.productName,
-      quantity: parseFloat(formData.quantity),
-      unit: formData.unit,
-      origin: formData.origin,
-      referenceId: formData.referenceId,
-      notes: formData.notes,
-      status: 'Pending Inspection',
-      exporterId: user.id,
-      qualityCriterion: {
-        name: formData.criterionName,
-      },
-    });
-
-    toast.success('Shipment created successfully!');
-    onOpenChange(false);
-    setFormData({
-      productName: '',
-      quantity: '',
-      unit: 'kg',
-      origin: '',
-      referenceId: '',
-      notes: '',
-      criterionName: 'Moisture Content',
-    });
   };
 
   return (
@@ -69,9 +121,11 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Shipment</DialogTitle>
-          <DialogDescription>Enter the details of your shipment for quality inspection</DialogDescription>
+          <DialogDescription>Enter shipment details below</DialogDescription>
         </DialogHeader>
+
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* PRODUCT + QUANTITY */}
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="productName">
@@ -79,12 +133,13 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
               </Label>
               <Input
                 id="productName"
-                placeholder="e.g., Product A"
                 value={formData.productName}
                 onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
+                placeholder="e.g., Coffee Beans"
                 required
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="quantity">
                 Quantity <span className="text-destructive">*</span>
@@ -94,74 +149,87 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
                   id="quantity"
                   type="number"
                   step="0.01"
-                  placeholder="1000"
                   value={formData.quantity}
                   onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                  placeholder="1000"
                   required
                 />
+
                 <Input
                   className="w-24"
-                  placeholder="kg"
                   value={formData.unit}
                   onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                  placeholder="kg"
                 />
               </div>
             </div>
           </div>
 
+          {/* ORIGIN */}
           <div className="space-y-2">
             <Label htmlFor="origin">
               Origin <span className="text-destructive">*</span>
             </Label>
             <Input
               id="origin"
-              placeholder="e.g., Region A"
               value={formData.origin}
               onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+              placeholder="e.g., Region A"
               required
             />
           </div>
 
+          {/* REFERENCE ID */}
           <div className="space-y-2">
             <Label htmlFor="referenceId">
-              Reference ID / PO Number <span className="text-destructive">*</span>
+              Reference ID <span className="text-destructive">*</span>
             </Label>
             <Input
               id="referenceId"
-              placeholder="e.g., PO-2024-001"
               value={formData.referenceId}
               onChange={(e) => setFormData({ ...formData, referenceId: e.target.value })}
+              placeholder="PO-2024-001"
               required
             />
           </div>
 
+          {/* QUALITY CRITERION */}
           <div className="space-y-2">
             <Label htmlFor="criterionName">Quality Criterion</Label>
             <Input
               id="criterionName"
-              placeholder="e.g., Moisture Content, Purity Level"
               value={formData.criterionName}
               onChange={(e) => setFormData({ ...formData, criterionName: e.target.value })}
+              placeholder="Moisture Content"
             />
           </div>
 
+          {/* NOTES */}
           <div className="space-y-2">
             <Label htmlFor="notes">Additional Notes</Label>
             <Textarea
               id="notes"
-              placeholder="Any additional information..."
               rows={3}
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              placeholder="Any additional information..."
             />
           </div>
 
+          {/* BUTTONS */}
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loading}
+              onClick={() => onOpenChange(false)}
+              className="flex-1"
+            >
               Cancel
             </Button>
-            <Button type="submit" className="flex-1">
-              Create Shipment
+
+            <Button type="submit" disabled={loading} className="flex-1">
+              {loading ? "Creating..." : "Create Shipment"}
             </Button>
           </div>
         </form>

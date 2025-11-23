@@ -1,32 +1,61 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Plus, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useApp, ShipmentStatus } from '@/context/AppContext';
+import { useApp } from '@/context/AppContext';
 import StatusBadge from '@/components/StatusBadge';
 import CreateShipmentModal from '@/components/CreateShipmentModal';
 
 const ExporterDashboard = () => {
   const navigate = useNavigate();
-  const { user, shipments } = useApp();
+  // fetchShipments is used to reload data from Supabase
+  const { user, shipments, fetchShipments } = useApp();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // redirect if not exporter
   useEffect(() => {
     if (!user || user.role !== 'exporter') {
       navigate('/login?role=exporter');
     }
   }, [user, navigate]);
 
+  // load shipments when user changes (or on mount once user is available)
+  useEffect(() => {
+    if (!user?.id) return;
+    fetchShipments().catch((err) => {
+      console.error('Failed to fetch shipments:', err);
+    });
+  }, [user?.id, fetchShipments]);
+
   if (!user) return null;
 
-  const myShipments = shipments.filter((s) => s.exporterId === user.id);
+  // map/filter logic — ensure exporterId comparison is correct
+  const myShipments = shipments.filter((s) => {
+    // support both shapes: camelCase (from client) and snake_case (from DB)
+    const exporterId = (s as any).exporterId ?? (s as any).exporter_id;
+    return exporterId === user.id;
+  });
 
   const filteredShipments =
-    filterStatus === 'all' ? myShipments : myShipments.filter((s) => s.status === filterStatus);
+    filterStatus === 'all' ? myShipments : myShipments.filter((s) => (s as any).status === filterStatus);
+
+  // When modal closes, refresh shipments so dashboard shows newest data
+  const handleModalOpenChange = useCallback(
+    (open: boolean) => {
+      setIsCreateModalOpen(open);
+      if (!open) {
+        // modal closed -> reload shipments
+        fetchShipments().catch((err) => {
+          console.error('Failed to fetch shipments after modal close:', err);
+        });
+      }
+    },
+    [fetchShipments]
+  );
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -43,27 +72,30 @@ const ExporterDashboard = () => {
               <CardTitle className="text-3xl">{myShipments.length}</CardTitle>
             </CardHeader>
           </Card>
+
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Pending Inspection</CardDescription>
               <CardTitle className="text-3xl">
-                {myShipments.filter((s) => s.status === 'Pending Inspection').length}
+                {myShipments.filter((s) => (s as any).status === 'Pending Inspection').length}
               </CardTitle>
             </CardHeader>
           </Card>
+
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Inspected - Pass</CardDescription>
               <CardTitle className="text-3xl">
-                {myShipments.filter((s) => s.status === 'Inspected - Pass').length}
+                {myShipments.filter((s) => (s as any).status === 'Inspected - Pass').length}
               </CardTitle>
             </CardHeader>
           </Card>
+
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Certificates Issued</CardDescription>
               <CardTitle className="text-3xl">
-                {myShipments.filter((s) => s.status === 'Certificate Issued').length}
+                {myShipments.filter((s) => (s as any).status === 'Certificate Issued').length}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -76,6 +108,7 @@ const ExporterDashboard = () => {
                 <CardTitle>My Shipments</CardTitle>
                 <CardDescription>Manage and track your shipment inspections</CardDescription>
               </div>
+
               <div className="flex items-center gap-4">
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
                   <SelectTrigger className="w-[200px]">
@@ -89,6 +122,7 @@ const ExporterDashboard = () => {
                     <SelectItem value="Certificate Issued">Certificate Issued</SelectItem>
                   </SelectContent>
                 </Select>
+
                 <Button onClick={() => setIsCreateModalOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Shipment
@@ -96,6 +130,7 @@ const ExporterDashboard = () => {
               </div>
             </div>
           </CardHeader>
+
           <CardContent>
             {filteredShipments.length === 0 ? (
               <div className="text-center py-12">
@@ -116,26 +151,38 @@ const ExporterDashboard = () => {
                     <TableHead>Action</TableHead>
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
-                  {filteredShipments.map((shipment) => (
-                    <TableRow key={shipment.id}>
-                      <TableCell className="font-medium">{shipment.id}</TableCell>
-                      <TableCell>{shipment.productName}</TableCell>
-                      <TableCell>
-                        {shipment.quantity} {shipment.unit}
-                      </TableCell>
-                      <TableCell>{shipment.origin}</TableCell>
-                      <TableCell>
-                        <StatusBadge status={shipment.status} />
-                      </TableCell>
-                      <TableCell>{new Date(shipment.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Button variant="outline" size="sm" asChild>
-                          <Link to={`/exporter/shipment/${shipment.id}`}>View</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredShipments.map((shipment) => {
+                    // defensive property access for compatibility with both shapes
+                    const id = (shipment as any).id ?? (shipment as any).referenceId ?? (shipment as any).reference_id;
+                    const created =
+                      (shipment as any).createdAt ?? (shipment as any).created_at ?? Date.now();
+                    const productName = (shipment as any).productName ?? (shipment as any).product_name;
+                    const quantity = (shipment as any).quantity ?? (shipment as any).qty ?? '';
+                    const unit = (shipment as any).unit ?? '';
+                    const origin = (shipment as any).origin ?? (shipment as any).origin;
+                    const status = (shipment as any).status;
+                    return (
+                      <TableRow key={id ?? Math.random().toString(36).slice(2)}>
+                        <TableCell className="font-medium">{id}</TableCell>
+                        <TableCell>{productName}</TableCell>
+                        <TableCell>
+                          {quantity} {unit}
+                        </TableCell>
+                        <TableCell>{origin}</TableCell>
+                        <TableCell>
+                          <StatusBadge status={status} />
+                        </TableCell>
+                        <TableCell>{new Date(created).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Button variant="outline" size="sm" asChild>
+                            <Link to={`/exporter/shipment/${id}`}>View</Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
@@ -143,7 +190,7 @@ const ExporterDashboard = () => {
         </Card>
       </div>
 
-      <CreateShipmentModal open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
+      <CreateShipmentModal open={isCreateModalOpen} onOpenChange={handleModalOpenChange} />
     </div>
   );
 };
