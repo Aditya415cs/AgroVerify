@@ -68,7 +68,7 @@ const Landing = () => {
               className="text-3xl md:text-4xl font-bold mb-6 text-foreground justify-center"
             />
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. qwertyuiop asdfghjkl zxcvbnm. aaabbbcccddd eeefffggghhh iiiiiiii
+              {/* Removed placeholder demo text */}
             </p>
             <div className="mt-6">
               <a href="/" className="text-sm text-primary hover:underline">Back to top</a>
@@ -314,70 +314,70 @@ const Landing = () => {
               <AccordionItem value="item-1">
                 <AccordionTrigger>What is Agrofy?</AccordionTrigger>
                 <AccordionContent>
-                  Agrofy is a platform that helps manage digital trade certification. Lorem ipsum dolor sit amet, consectetur.
+                  Agrofy is a platform that helps manage digital trade certification.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-2">
                 <AccordionTrigger>Why was Agrofy created?</AccordionTrigger>
                 <AccordionContent>
-                  It was created to streamline inspections and prevent fraud with verifiable digital certificates. lorem ipsum dolor sit.
+                  It was created to streamline inspections and prevent fraud with verifiable digital certificates.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-3">
                 <AccordionTrigger>How secure are the certificates?</AccordionTrigger>
                 <AccordionContent>
-                  Certificates use verification mechanisms to ensure authenticity. Placeholder answer text for now.
+                  Certificates use verification mechanisms to ensure authenticity.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-4">
                 <AccordionTrigger>Who can verify a certificate?</AccordionTrigger>
                 <AccordionContent>
-                  Anyone with the certificate ID or QR code can verify. More descriptive content will appear here later.
+                  Anyone with the certificate ID or QR code can verify.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-5">
                 <AccordionTrigger>How do exporters start?</AccordionTrigger>
                 <AccordionContent>
-                  Exporters create shipment records and request inspections through the dashboard. (Placeholder)
+                  Exporters create shipment records and request inspections through the dashboard.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-6">
                 <AccordionTrigger>What data is required for inspection?</AccordionTrigger>
                 <AccordionContent>
-                  Basic shipment details, product criteria and supporting documents are needed. (Placeholder text)
+                  Basic shipment details, product criteria and supporting documents are needed.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-7">
                 <AccordionTrigger>Is there a mobile app?</AccordionTrigger>
                 <AccordionContent>
-                  We plan mobile support; currently web interface covers the features. Placeholder answer.
+                  We plan mobile support; currently web interface covers the features.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-8">
                 <AccordionTrigger>Can I revoke a certificate?</AccordionTrigger>
                 <AccordionContent>
-                  Yes — certificates can be marked invalid if tampering is detected or records updated. (Placeholder)
+                  Yes — certificates can be marked invalid if tampering is detected or records updated.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-9">
                 <AccordionTrigger>How are disputes handled?</AccordionTrigger>
                 <AccordionContent>
-                  Dispute workflows will be defined for contested inspections. Temporary placeholder text.
+                  Dispute workflows will be defined for contested inspections.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-10">
                 <AccordionTrigger>Who do I contact for support?</AccordionTrigger>
                 <AccordionContent>
-                  Support contact details and processes will be added here. For now this is filler content.
+                  Support contact details and processes will be added here.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
