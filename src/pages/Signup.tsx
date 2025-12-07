@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserRole } from '@/context/AppContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ const Signup = () => {
     role: 'exporter' as UserRole,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name || !formData.email || !formData.password || !formData.organization) {
@@ -27,9 +28,48 @@ const Signup = () => {
       return;
     }
 
-    // Mock signup
-    toast.success('Account created successfully! Please login.');
-    navigate('/login?role=' + formData.role);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            organization: formData.organization,
+            role: formData.role,
+          },
+        },
+      });
+
+      if (error) {
+        console.error('Sign up error:', error);
+        toast.error(error.message || 'Failed to sign up');
+        return;
+      }
+
+      // If we received a user back (some Supabase configs return user immediately), upsert a profile row
+      const supaUser = (data as any)?.user;
+      if (supaUser && supaUser.id) {
+        try {
+          await supabase.from('profiles').upsert({
+            id: supaUser.id,
+            name: formData.name,
+            email: formData.email,
+            organization: formData.organization,
+            role: formData.role,
+          });
+        } catch (e) {
+          console.warn('Failed to create profile on signup:', e);
+        }
+      }
+
+      // If sign-up succeeds, the user may need to confirm their email depending on Supabase settings
+      toast.success('Account created! Please check your email to confirm, then log in.');
+      navigate('/login?role=' + formData.role);
+    } catch (err: any) {
+      console.error('Signup exception:', err);
+      toast.error(err?.message || 'Signup failed');
+    }
   };
 
   return (

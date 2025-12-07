@@ -32,9 +32,9 @@ const PillNav: React.FC<PillNavProps> = ({
   activeHref,
   className = '',
   ease = 'power3.easeOut',
-  baseColor = '#fff',
-  pillColor = '#060010',
-  hoveredPillTextColor = '#060010',
+  baseColor = 'hsl(var(--card))',
+  pillColor = 'hsl(var(--primary))',
+  hoveredPillTextColor = 'hsl(var(--primary-foreground))',
   pillTextColor,
   onMobileMenuClick,
   initialLoadAnimation = true
@@ -320,8 +320,8 @@ const PillNav: React.FC<PillNavProps> = ({
               };
 
               const pillStyle: React.CSSProperties = {
-                background: 'var(--pill-bg, #fff)',
-                color: 'var(--pill-text, var(--base, #000))',
+                background: 'var(--pill-bg, hsl(var(--card)))',
+                color: 'var(--pill-text, var(--base, hsl(var(--card-foreground))))',
                 paddingLeft: 'var(--pill-pad-x)',
                 paddingRight: 'var(--pill-pad-x)'
               };
@@ -349,7 +349,7 @@ const PillNav: React.FC<PillNavProps> = ({
                     <span
                       className="pill-label-hover absolute left-0 top-0 z-[3] inline-block"
                       style={{
-                        color: 'var(--hover-text, #fff)',
+                        color: 'var(--hover-text, hsl(var(--card-foreground)))',
                         willChange: 'transform, opacity'
                       }}
                       aria-hidden="true"
@@ -360,7 +360,7 @@ const PillNav: React.FC<PillNavProps> = ({
                   {isActive && (
                     <span
                       className="absolute left-1/2 -bottom-[6px] -translate-x-1/2 w-3 h-3 rounded-full z-[4]"
-                      style={{ background: 'var(--base, #000)' }}
+                      style={{ background: 'var(--base, hsl(var(--card)))' }}
                       aria-hidden="true"
                     />
                   )}
@@ -419,11 +419,11 @@ const PillNav: React.FC<PillNavProps> = ({
         >
           <span
             className="hamburger-line w-4 h-0.5 rounded origin-center transition-all duration-[10ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]"
-            style={{ background: 'var(--pill-bg, #fff)' }}
+            style={{ background: 'var(--pill-bg, hsl(var(--card)))' }}
           />
           <span
             className="hamburger-line w-4 h-0.5 rounded origin-center transition-all duration-[10ms] ease-[cubic-bezier(0.25,0.1,0.25,1)]"
-            style={{ background: 'var(--pill-bg, #fff)' }}
+            style={{ background: 'var(--pill-bg, hsl(var(--card)))' }}
           />
         </button>
       </nav>
@@ -431,24 +431,24 @@ const PillNav: React.FC<PillNavProps> = ({
       <div
         ref={mobileMenuRef}
         className="md:hidden absolute top-[3em] left-4 right-4 rounded-[27px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-[998] origin-top"
-        style={{
-          ...cssVars,
-          background: 'var(--base, #f0f0f0)'
-        }}
+            style={{
+              ...cssVars,
+              background: 'var(--base, hsl(var(--card)))'
+            }}
       >
         <ul className="list-none m-0 p-[3px] flex flex-col gap-[3px]">
           {items.map(item => {
             const defaultStyle: React.CSSProperties = {
-              background: 'var(--pill-bg, #fff)',
-              color: 'var(--pill-text, #fff)'
+              background: 'var(--pill-bg, hsl(var(--card)))',
+              color: 'var(--pill-text, hsl(var(--card-foreground)))'
             };
             const hoverIn = (e: React.MouseEvent<HTMLAnchorElement>) => {
               e.currentTarget.style.background = 'var(--base)';
-              e.currentTarget.style.color = 'var(--hover-text, #fff)';
+              e.currentTarget.style.color = 'var(--hover-text, hsl(var(--card-foreground)))';
             };
             const hoverOut = (e: React.MouseEvent<HTMLAnchorElement>) => {
-              e.currentTarget.style.background = 'var(--pill-bg, #fff)';
-              e.currentTarget.style.color = 'var(--pill-text, #fff)';
+              e.currentTarget.style.background = 'var(--pill-bg, hsl(var(--card)))';
+              e.currentTarget.style.color = 'var(--pill-text, hsl(var(--card-foreground)))';
             };
 
             const linkClasses =

@@ -22,8 +22,8 @@ interface CreateShipmentModalProps {
 }
 
 const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) => {
-  // NOTE: we now destructure fetchShipments from context and use it after insert
-  const { user, fetchShipments } = useApp();
+  // NOTE: we now destructure fetchShipments and addShipment from context and use them after insert
+  const { user, fetchShipments, addShipment } = useApp();
 
   const [loading, setLoading] = useState(false);
 
@@ -63,12 +63,59 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
       const { data: authData, error: authError } = await supabase.auth.getUser();
       if (authError) {
         console.error("Failed to get supabase auth user:", authError);
-        toast.error("Unable to fetch authenticated user. Please login again.");
-        setLoading(false);
-        return;
+        // don't immediately fail — allow a dev/local fallback if app-level user exists
       }
       const supaUser = authData?.user;
+
+      // If there's no Supabase-authenticated user but the app has a mocked user (dev mode),
+      // create the shipment locally in context so the exporter can continue working in the demo.
       if (!supaUser) {
+        if (user) {
+          // create a locally-scoped shipment row to show in the dashboard
+          const localId = (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
+            ? (crypto as any).randomUUID()
+            : `local-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
+          const localRow: any = {
+            id: localId,
+            productName: formData.productName,
+            quantity: Number(formData.quantity),
+            unit: formData.unit,
+            origin: formData.origin,
+            referenceId: formData.referenceId,
+            notes: formData.notes || undefined,
+            status: "Pending Inspection",
+            exporterId: user.id,
+            createdAt: new Date().toISOString(),
+            qualityCriterion: { name: formData.criterionName },
+          };
+
+          // add to local context state and exit
+          try {
+            // persist local demo shipment to localStorage so it can be synced later
+            try {
+              const key = 'agrofy:local_shipments';
+              const existing = JSON.parse(localStorage.getItem(key) || '[]');
+              existing.unshift(localRow);
+              localStorage.setItem(key, JSON.stringify(existing));
+            } catch (e) {
+              console.warn('Failed to persist local shipment to localStorage', e);
+            }
+
+            addShipment(localRow);
+            toast.success("Shipment created locally (demo mode)");
+            resetForm();
+            onOpenChange(false);
+          } catch (err: any) {
+            console.error("Local shipment creation error:", err);
+            toast.error("Failed to create local shipment");
+          } finally {
+            setLoading(false);
+          }
+
+          return;
+        }
+
         toast.error("You must be logged in to create a shipment");
         setLoading(false);
         return;

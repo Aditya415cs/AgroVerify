@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApp, UserRole } from '@/context/AppContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -26,24 +28,81 @@ const Login = () => {
       return;
     }
 
-    // Mock authentication
-    const mockUser = {
-      id: selectedRole === 'exporter' ? 'EXP-001' : 'QA-001',
-      name: selectedRole === 'exporter' ? 'John Smith' : 'Jane Doe',
-      email: email,
-      role: selectedRole,
-      organization: selectedRole === 'exporter' ? 'ABC Exports Ltd.' : 'Certify QA Division',
-    };
+    // Use Supabase email/password sign-in
+    (async () => {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          console.error('Supabase sign-in error:', error);
+          toast.error(error.message || 'Failed to sign in');
+          return;
+        }
 
-    setUser(mockUser);
-    toast.success('Login successful!');
+        const supaUser = data?.user;
+        if (!supaUser) {
+          toast.error('No user returned from auth.');
+          return;
+        }
 
-    // Navigate to appropriate dashboard
-    if (selectedRole === 'exporter') {
-      navigate('/exporter/dashboard');
-    } else {
-      navigate('/qa/dashboard');
-    }
+        // Fetch the user's profile row to get authoritative role/name/org
+        try {
+          const { data: profileData, error: profileErr } = await supabase.from('profiles').select('*').eq('id', supaUser.id).maybeSingle();
+          if (profileErr) {
+            console.warn('Failed to fetch profile after sign-in:', profileErr);
+          }
+
+          const roleFromProfile = (profileData as any)?.role || selectedRole;
+          const nameFromProfile = (profileData as any)?.name || (supaUser.user_metadata as any)?.name || (selectedRole === 'exporter' ? 'Exporter' : 'QA Agent');
+          const orgFromProfile = (profileData as any)?.organization || (supaUser.user_metadata as any)?.organization || '';
+
+          // Ensure profile exists (upsert) in case signUp didn't create it
+          try {
+            await supabase.from('profiles').upsert({ id: supaUser.id, email: supaUser.email, name: nameFromProfile, role: roleFromProfile, organization: orgFromProfile });
+          } catch (e) {
+            console.warn('Failed to upsert profile after sign-in:', e);
+          }
+
+          const appUser = {
+            id: supaUser.id,
+            name: nameFromProfile,
+            email: supaUser.email || email,
+            role: roleFromProfile,
+            organization: orgFromProfile,
+          } as any;
+
+          setUser(appUser);
+          toast.success('Login successful!');
+
+          // Navigate to appropriate dashboard
+          if ((appUser.role as UserRole) === 'exporter') {
+            navigate('/exporter/dashboard');
+          } else {
+            navigate('/qa/dashboard');
+          }
+        } catch (e) {
+          console.error('Profile fetch/upsert error:', e);
+          // fallback to metadata/selectedRole
+          const appUser = {
+            id: supaUser.id,
+            name: (supaUser.user_metadata as any)?.name || (selectedRole === 'exporter' ? 'Exporter' : 'QA Agent'),
+            email: supaUser.email || email,
+            role: (supaUser.user_metadata as any)?.role || selectedRole,
+            organization: (supaUser.user_metadata as any)?.organization || '',
+          } as any;
+
+          setUser(appUser);
+          toast.success('Login successful!');
+          if ((appUser.role as UserRole) === 'exporter') {
+            navigate('/exporter/dashboard');
+          } else {
+            navigate('/qa/dashboard');
+          }
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        toast.error((err as any)?.message || 'Login failed');
+      }
+    })();
   };
 
   return (

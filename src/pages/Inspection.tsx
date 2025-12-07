@@ -40,7 +40,7 @@ const Inspection = () => {
 
   const isInspected = shipment.status !== 'Pending Inspection';
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.criterionValue || !formData.comments) {
@@ -59,7 +59,11 @@ const Inspection = () => {
       inspectorId: user!.id,
     };
 
-    updateShipment(shipment.id, inspectionData);
+    const ok = await updateShipment(shipment.id, inspectionData);
+    if (!ok) {
+      toast.error('Failed to save inspection — check diagnostics or console for details');
+      return;
+    }
 
     // If passed, generate certificate
     if (formData.result === 'Pass') {
@@ -90,7 +94,7 @@ const Inspection = () => {
         },
       };
 
-      addCertificate(certificate);
+      await addCertificate(certificate);
       toast.success('Inspection completed and certificate issued!');
     } else {
       toast.success('Inspection completed');

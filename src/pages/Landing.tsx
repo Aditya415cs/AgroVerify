@@ -1,62 +1,74 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-// Import the TiltedCard and BlurText components
 import TiltedCard from '@/components/ui/TiltedCard';
-import BlurText from "@/components/ui/BlurText"; 
+import BlurText from "@/components/ui/BlurText";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { Instagram, Phone, MessageCircle, Mail, MapPin } from 'lucide-react';
 
 const Landing = () => {
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-secondary to-primary py-20 md:py-32">
+
+      {/* HERO SECTION */}
+      <section
+        className="relative overflow-hidden py-20 md:py-32"
+        style={{
+          backgroundImage:
+            "url('/images/hero-field.jpg'), url('/images/corn.jpg'), linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)",
+          backgroundSize: "cover, cover, cover",
+          backgroundPosition: "center, center, center",
+        }}
+      >
+        <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" aria-hidden="true" />
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            
-            {/* 2. Apply BlurText to the main title */}
+          <div className="max-w-3xl mx-auto text-center relative z-10">
+
             <BlurText
               text="Agrofy Portal"
               animateBy="words"
               direction="bottom"
-              delay={150} // Delay between each word appearing
-              className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6 justify-center"
+              delay={150}
+              className="text-4xl md:text-6xl font-bold mb-6 justify-center text-primary-foreground drop-shadow-lg"
             />
-            
-            {/* 3. Apply BlurText to the tagline */}
+
             <BlurText
               text="Digital Trade Certification for the Modern World"
               animateBy="words"
               direction="bottom"
-              delay={100} 
-              className="text-xl md:text-2xl text-primary-foreground/90 mb-8 justify-center"
+              delay={100}
+              className="text-xl md:text-2xl mb-8 justify-center text-primary-foreground/95"
             />
-            
-            {/* 4. Apply BlurText to the description */}
+
             <BlurText
               text="Streamline quality inspections, generate verifiable digital certificates, and prevent fraud with blockchain-inspired verification technology."
               animateBy="words"
               direction="bottom"
-              delay={50} // Shorter delay for the main paragraph
-              className="text-lg text-primary-foreground/80 mb-10 max-w-2xl mx-auto justify-center"
+              delay={50}
+              className="text-lg mb-10 max-w-2xl mx-auto justify-center text-primary-foreground/85"
             />
-            
-            {/* CTA Buttons remain static */}
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" variant="secondary">
+              <Button asChild size="lg" variant="outline"
+                className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground/20">
                 <Link to="/login?role=exporter">Login as Exporter</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground/20">
+
+              <Button asChild size="lg" variant="outline"
+                className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground/20">
                 <Link to="/login?role=qa">Login as QA Agent</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground/20">
+
+              <Button asChild size="lg" variant="outline"
+                className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground/20">
                 <Link to="/verify">Verify Certificate</Link>
               </Button>
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* About Section - anchor target for navbar */}
+      {/* ABOUT SECTION */}
       <section id="about" className="py-20 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
@@ -67,9 +79,7 @@ const Landing = () => {
               delay={80}
               className="text-3xl md:text-4xl font-bold mb-6 text-foreground justify-center"
             />
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              {/* Removed placeholder demo text */}
-            </p>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto"></p>
             <div className="mt-6">
               <a href="/" className="text-sm text-primary hover:underline">Back to top</a>
             </div>
@@ -77,11 +87,20 @@ const Landing = () => {
         </div>
       </section>
 
-      
+      {/* WHY CHOOSE US */}
+      <section
+        className="py-20 relative"
+        style={{
+          backgroundImage:
+            "url('/images/hero-field.jpg'), linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)",
+          backgroundSize: "cover, cover",
+          backgroundPosition: "center, center",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+        <div className="container mx-auto px-4 relative z-10">
 
-      {/* Features Section - We can apply BlurText to the feature titles too */}
-      <section className="py-20 bg-gradient-to-br from-primary via-secondary to-primary">
-        <div className="container mx-auto px-4">
           <BlurText
             text="Why Choose Agrofy?"
             animateBy="words"
@@ -89,218 +108,230 @@ const Landing = () => {
             delay={80}
             className="text-3xl md:text-4xl font-bold text-center mb-12 text-primary-foreground justify-center"
           />
-          {/* MODIFIED GRID LAYOUT TO ACCOMMODATE 4 CARDS ON LARGE SCREENS */}
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-            {/* Feature 1 - Digital Certificates (TiltedCard with overlay text) */}
-            <div className="flex flex-col items-stretch h-full">
-              <div className="rounded-[15px] overflow-hidden shadow-md border border-border">
-                <TiltedCard
-                  imageSrc="/images/irrigation.jpg"
-                  altText="Digital Certificates"
-                  captionText="Digital Certificates"
-                  containerHeight="240px"
-                  imageWidth="100%"
-                  imageHeight="240px"
-                  scaleOnHover={1.06}
-                  rotateAmplitude={10}
-                  showTooltip={false}
-                  displayOverlayContent={true}
-                  overlayContent={
-                    <div className="w-full h-full flex items-center justify-center p-4 bg-transparent text-center">
-                      <div>
-                        <h3 className="text-lg font-semibold text-black">Digital Certificates</h3>
-                        <p className="text-sm text-slate-700">Generate tamper-proof digital certificates with verifiable credentials for every shipment inspection.</p>
-                      </div>
+
+            {/* CARD 1 */}
+            <div className="rounded-[15px] overflow-hidden shadow-md border border-slate-200">
+              <TiltedCard
+                imageSrc="/images/irrigation.jpg"
+                altText="Digital Certificates"
+                captionText="Digital Certificates"
+                containerHeight="240px"
+                imageWidth="100%"
+                imageHeight="240px"
+                scaleOnHover={1.06}
+                rotateAmplitude={10}
+                showTooltip={false}
+                displayOverlayContent={true}
+                overlayContent={
+                  <div className="absolute inset-0 flex items-center justify-center p-6">
+                    <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+                    <div className="relative z-10 text-center px-4 max-w-xs md:max-w-sm">
+                      <h3 className="text-xl font-bold text-primary-foreground drop-shadow-lg">Digital Certificates</h3>
+                      <p className="text-sm text-primary-foreground/90 drop-shadow">
+                        Generate tamper-proof digital certificates with verifiable credentials.
+                      </p>
                     </div>
-                  }
-                />
-              </div>
+                  </div>
+                }
+              />
             </div>
 
-            {/* Feature 2 - Faster Inspections (overlay text) */}
-            <div className="flex flex-col items-stretch h-full">
-              <div className="rounded-[15px] overflow-hidden shadow-md border border-border">
-                <TiltedCard
-                  imageSrc="/images/rows.jpg"
-                  altText="Faster Inspections"
-                  captionText="Faster Inspections"
-                  containerHeight="240px"
-                  imageWidth="100%"
-                  imageHeight="240px"
-                  scaleOnHover={1.06}
-                  rotateAmplitude={10}
-                  showTooltip={false}
-                  displayOverlayContent={true}
-                  overlayContent={
-                    <div className="w-full h-full flex items-center justify-center p-4 bg-transparent text-center">
-                      <div>
-                        <h3 className="text-lg font-semibold text-black">Faster Inspections</h3>
-                        <p className="text-sm text-slate-700">Streamline your quality assurance workflow with digital forms and automated certificate generation.</p>
-                      </div>
+            {/* CARD 2 */}
+            <div className="rounded-[15px] overflow-hidden shadow-md border border-slate-200">
+              <TiltedCard
+                imageSrc="/images/rows.jpg"
+                altText="Faster Inspections"
+                captionText="Faster Inspections"
+                containerHeight="240px"
+                imageWidth="100%"
+                imageHeight="240px"
+                scaleOnHover={1.06}
+                rotateAmplitude={10}
+                showTooltip={false}
+                displayOverlayContent={true}
+                overlayContent={
+                  <div className="absolute inset-0 flex items-center justify-center p-6">
+                    <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+                    <div className="relative z-10 text-center px-4 max-w-xs md:max-w-sm">
+                      <h3 className="text-xl font-bold text-primary-foreground drop-shadow-lg">Faster Inspections</h3>
+                      <p className="text-sm text-primary-foreground/90 drop-shadow">
+                        Streamline QA workflow with digital forms and automation.
+                      </p>
                     </div>
-                  }
-                />
-              </div>
+                  </div>
+                }
+              />
             </div>
 
-            {/* Feature 3 - Fraud Prevention (overlay text) */}
-            <div className="flex flex-col items-stretch h-full">
-              <div className="rounded-[15px] overflow-hidden shadow-md border border-border">
-                <TiltedCard
-                  imageSrc="/images/corn.jpg"
-                  altText="Fraud Prevention"
-                  captionText="Fraud Prevention"
-                  containerHeight="240px"
-                  imageWidth="100%"
-                  imageHeight="240px"
-                  scaleOnHover={1.06}
-                  rotateAmplitude={10}
-                  showTooltip={false}
-                  displayOverlayContent={true}
-                  overlayContent={
-                    <div className="w-full h-full flex items-center justify-center p-4 bg-transparent text-center">
-                      <div>
-                        <h3 className="text-lg font-semibold text-black">Fraud Prevention</h3>
-                        <p className="text-sm text-slate-700">Verify certificates instantly with unique IDs and digital signatures, preventing document forgery.</p>
-                      </div>
+            {/* CARD 3 */}
+            <div className="rounded-[15px] overflow-hidden shadow-md border border-slate-200">
+              <TiltedCard
+                imageSrc="/images/corn.jpg"
+                altText="Fraud Prevention"
+                captionText="Fraud Prevention"
+                containerHeight="240px"
+                imageWidth="100%"
+                imageHeight="240px"
+                scaleOnHover={1.06}
+                rotateAmplitude={10}
+                showTooltip={false}
+                displayOverlayContent={true}
+                overlayContent={
+                  <div className="absolute inset-0 flex items-center justify-center p-6">
+                    <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+                    <div className="relative z-10 text-center px-4 max-w-xs md:max-w-sm">
+                      <h3 className="text-xl font-bold text-primary-foreground drop-shadow-lg">Fraud Prevention</h3>
+                      <p className="text-sm text-primary-foreground/90 drop-shadow">
+                        Prevent forgery with digital signatures & verification.
+                      </p>
                     </div>
-                  }
-                />
-              </div>
+                  </div>
+                }
+              />
             </div>
 
-            {/* Feature 4 - End-to-End Visibility (overlay text) */}
-            <div className="flex flex-col items-stretch h-full">
-              <div className="rounded-[15px] overflow-hidden shadow-md border border-border">
-                <TiltedCard
-                  imageSrc="/images/drone.jpg"
-                  altText="End-to-End Visibility"
-                  captionText="End-to-End Visibility"
-                  containerHeight="240px"
-                  imageWidth="100%"
-                  imageHeight="240px"
-                  scaleOnHover={1.06}
-                  rotateAmplitude={10}
-                  showTooltip={false}
-                  displayOverlayContent={true}
-                  overlayContent={
-                    <div className="w-full h-full flex items-center justify-center p-4 bg-transparent text-center">
-                      <div>
-                        <h3 className="text-lg font-semibold text-black">End-to-End Visibility</h3>
-                        <p className="text-sm text-slate-700">Monitor the entire certification journey—from quality check initiation to final verification—all in one transparent dashboard.</p>
-                      </div>
+            {/* CARD 4 */}
+            <div className="rounded-[15px] overflow-hidden shadow-md border border-slate-200">
+              <TiltedCard
+                imageSrc="/images/drone.jpg"
+                altText="End-to-End Visibility"
+                captionText="End-to-End Visibility"
+                containerHeight="240px"
+                imageWidth="100%"
+                imageHeight="240px"
+                scaleOnHover={1.06}
+                rotateAmplitude={10}
+                showTooltip={false}
+                displayOverlayContent={true}
+                overlayContent={
+                  <div className="absolute inset-0 flex items-center justify-center p-6">
+                    <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+                    <div className="relative z-10 text-center px-4 max-w-xs md:max-w-sm">
+                      <h3 className="text-xl font-bold text-primary-foreground drop-shadow-lg">End-to-End Visibility</h3>
+                      <p className="text-sm text-primary-foreground/90 drop-shadow">
+                        Monitor certification from inspection to verification.
+                      </p>
                     </div>
-                  }
-                />
-              </div>
+                  </div>
+                }
+              />
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* Process Steps */}
+      {/* HOW IT WORKS */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
             How It Works
           </h2>
-          <div className="max-w-4xl mx-auto">
-            <div className="space-y-8">
-              <div className="flex gap-6 items-start">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
-                  1
-                </div>
-                <div>
-                  {/* Apply BlurText to the subtitle */}
-                  <BlurText
-                    text="Exporter Request"
-                    animateBy="words"
-                    direction="top"
-                    delay={100}
-                    className="text-xl font-semibold mb-2 text-foreground"
-                  />
-                  <p className="text-muted-foreground">
-                    Exporters create shipment records with product details and quality criteria to be verified.
-                  </p>
-                </div>
-              </div>
 
-              <div className="flex gap-6 items-start">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center font-bold text-lg">
-                  2
-                </div>
-                <div>
-                  <BlurText
-                    text="QA Inspection"
-                    animateBy="words"
-                    direction="top"
-                    delay={100}
-                    className="text-xl font-semibold mb-2 text-foreground"
-                  />
-                  <p className="text-muted-foreground">
-                    Quality assurance agents conduct inspections and record results digitally with supporting documentation.
-                  </p>
-                </div>
-              </div>
+          <div className="max-w-4xl mx-auto space-y-8">
 
-              <div className="flex gap-6 items-start">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-success text-success-foreground flex items-center justify-center font-bold text-lg">
-                  3
-                </div>
-                <div>
-                  <BlurText
-                    text="Certificate Issued"
-                    animateBy="words"
-                    direction="top"
-                    delay={100}
-                    className="text-xl font-semibold mb-2 text-foreground"
-                  />
-                  <p className="text-muted-foreground">
-                    Upon passing inspection, a verifiable digital certificate is automatically generated with a unique ID.
-                  </p>
-                </div>
+            {/* Step 1 */}
+            <div className="flex gap-6 items-start">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
+                1
               </div>
-
-              <div className="flex gap-6 items-start">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-bold text-lg">
-                  4
-                </div>
-                <div>
-                  <BlurText
-                    text="Verifier"
-                    animateBy="words"
-                    direction="top"
-                    delay={100}
-                    className="text-xl font-semibold mb-2 text-foreground"
-                  />
-                  <p className="text-muted-foreground">
-                    Anyone can verify certificates instantly using the certificate ID or QR code scan.
-                  </p>
-                </div>
+              <div>
+                <BlurText
+                  text="Exporter Request"
+                  animateBy="words"
+                  direction="top"
+                  delay={100}
+                  className="text-xl font-semibold mb-2 text-foreground"
+                />
+                <p className="text-muted-foreground">
+                  Exporters create shipment records with product details & criteria.
+                </p>
               </div>
             </div>
+
+            {/* Step 2 */}
+            <div className="flex gap-6 items-start">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center font-bold text-lg">
+                2
+              </div>
+              <div>
+                <BlurText
+                  text="QA Inspection"
+                  animateBy="words"
+                  direction="top"
+                  delay={100}
+                  className="text-xl font-semibold mb-2 text-foreground"
+                />
+                <p className="text-muted-foreground">
+                  QA agents inspect shipments and upload results digitally.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex gap-6 items-start">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-success text-success-foreground flex items-center justify-center font-bold text-lg">
+                3
+              </div>
+              <div>
+                <BlurText
+                  text="Certificate Issued"
+                  animateBy="words"
+                  direction="top"
+                  delay={100}
+                  className="text-xl font-semibold mb-2 text-foreground"
+                />
+                <p className="text-muted-foreground">
+                  A verifiable digital certificate is generated with a unique ID.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 4 */}
+            <div className="flex gap-6 items-start">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-bold text-lg">
+                4
+              </div>
+              <div>
+                <BlurText
+                  text="Verifier"
+                  animateBy="words"
+                  direction="top"
+                  delay={100}
+                  className="text-xl font-semibold mb-2 text-foreground"
+                />
+                <p className="text-muted-foreground">
+                  Anyone can verify certificates using the ID or QR code.
+                </p>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA SECTION */}
       <section className="py-20 bg-gradient-to-r from-primary to-secondary">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-primary-foreground">
             Ready to Get Started?
           </h2>
-          <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl mb-8 max-w-2xl mx-auto text-primary-foreground/90">
             Join the future of trade certification. Create your account today.
           </p>
+
           <Button asChild size="lg" variant="secondary">
             <Link to="/signup">Create Account</Link>
           </Button>
         </div>
       </section>
-      
-      {/* FAQ Section */}
+
+      {/* FAQ */}
       <section id="faqs" className="py-20 bg-background">
         <div className="container mx-auto px-4">
+
           <div className="max-w-4xl mx-auto">
             <BlurText
               text="Frequently Asked Questions"
@@ -311,6 +342,7 @@ const Landing = () => {
             />
 
             <Accordion type="single" collapsible className="space-y-4">
+
               <AccordionItem value="item-1">
                 <AccordionTrigger>What is Agrofy?</AccordionTrigger>
                 <AccordionContent>
@@ -321,7 +353,7 @@ const Landing = () => {
               <AccordionItem value="item-2">
                 <AccordionTrigger>Why was Agrofy created?</AccordionTrigger>
                 <AccordionContent>
-                  It was created to streamline inspections and prevent fraud with verifiable digital certificates.
+                  It streamlines inspections and prevents fraud with verifiable certificates.
                 </AccordionContent>
               </AccordionItem>
 
@@ -335,55 +367,107 @@ const Landing = () => {
               <AccordionItem value="item-4">
                 <AccordionTrigger>Who can verify a certificate?</AccordionTrigger>
                 <AccordionContent>
-                  Anyone with the certificate ID or QR code can verify.
+                  Anyone with the certificate ID or QR code.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-5">
                 <AccordionTrigger>How do exporters start?</AccordionTrigger>
                 <AccordionContent>
-                  Exporters create shipment records and request inspections through the dashboard.
+                  By creating shipment records and requesting inspections.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-6">
-                <AccordionTrigger>What data is required for inspection?</AccordionTrigger>
+                <AccordionTrigger>What data is required?</AccordionTrigger>
                 <AccordionContent>
-                  Basic shipment details, product criteria and supporting documents are needed.
+                  Shipment details, product criteria, and supporting documents.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-7">
                 <AccordionTrigger>Is there a mobile app?</AccordionTrigger>
                 <AccordionContent>
-                  We plan mobile support; currently web interface covers the features.
+                  Mobile support is planned; web interface works today.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-8">
                 <AccordionTrigger>Can I revoke a certificate?</AccordionTrigger>
                 <AccordionContent>
-                  Yes — certificates can be marked invalid if tampering is detected or records updated.
+                  Yes — certificates can be marked invalid if tampering is detected.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-9">
                 <AccordionTrigger>How are disputes handled?</AccordionTrigger>
                 <AccordionContent>
-                  Dispute workflows will be defined for contested inspections.
+                  Dispute workflows will handle contested inspections.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-10">
                 <AccordionTrigger>Who do I contact for support?</AccordionTrigger>
                 <AccordionContent>
-                  Support contact details and processes will be added here.
+                  Support contact details will be added here.
                 </AccordionContent>
               </AccordionItem>
+
             </Accordion>
+
           </div>
         </div>
       </section>
+
+      {/* FOOTER */}
+      <section id="footer" className="py-12 bg-gradient-to-br from-primary to-secondary">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto text-primary-foreground">
+
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+
+              <div className="text-center md:text-left">
+                <h3 className="text-2xl font-semibold mb-4 text-primary-foreground">Contact Us</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center gap-3 justify-center md:justify-start">
+                    <Phone className="w-5 h-5" /> <span>+1 (555) 123-4567</span>
+                  </div>
+                  <div className="flex items-center gap-3 justify-center md:justify-start">
+                    <MessageCircle className="w-5 h-5" /> <span>+1 (555) 987-6543 (WhatsApp)</span>
+                  </div>
+                  <div className="flex items-center gap-3 justify-center md:justify-start">
+                    <Mail className="w-5 h-5" /> <span>support@agrofy.example</span>
+                  </div>
+                  <div className="flex items-center gap-3 justify-center md:justify-start">
+                    <MapPin className="w-5 h-5" /> <span>123 Farm Road, AgroCity</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center md:text-right">
+                <div className="flex justify-center md:justify-end gap-4">
+                  <a href="#" className="p-3 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20">
+                    <Instagram className="w-5 h-5 text-primary-foreground" />
+                  </a>
+                  <a href="#" className="p-3 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20">
+                    <MessageCircle className="w-5 h-5 text-primary-foreground" />
+                  </a>
+                  <a href="#" className="p-3 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20">
+                    <Phone className="w-5 h-5 text-primary-foreground" />
+                  </a>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="mt-8 text-center text-sm text-primary-foreground/80">
+              © {new Date().getFullYear()} Agrofy Portal. All rights reserved.
+            </div>
+
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 };
