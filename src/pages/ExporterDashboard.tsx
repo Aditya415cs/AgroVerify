@@ -8,10 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useApp } from '@/context/AppContext';
 import StatusBadge from '@/components/StatusBadge';
 import CreateShipmentModal from '@/components/CreateShipmentModal';
+import { supabase } from '@/integrations/supabase/client';
 
 const ExporterDashboard = () => {
   const navigate = useNavigate();
-  // fetchShipments is used to reload data from Supabase
   const { user, shipments, fetchShipments } = useApp();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -33,22 +33,33 @@ const ExporterDashboard = () => {
 
   if (!user) return null;
 
+  // logout handler so exporters actually switch Supabase user
+  const handleLogout = useCallback(async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Error signing out:', err);
+    } finally {
+      navigate('/login?role=exporter');
+    }
+  }, [navigate]);
+
   // map/filter logic — ensure exporterId comparison is correct
   const myShipments = shipments.filter((s) => {
-    // support both shapes: camelCase (from client) and snake_case (from DB)
     const exporterId = (s as any).exporterId ?? (s as any).exporter_id;
     return exporterId === user.id;
   });
 
   const filteredShipments =
-    filterStatus === 'all' ? myShipments : myShipments.filter((s) => (s as any).status === filterStatus);
+    filterStatus === 'all'
+      ? myShipments
+      : myShipments.filter((s) => (s as any).status === filterStatus);
 
   // When modal closes, refresh shipments so dashboard shows newest data
   const handleModalOpenChange = useCallback(
     (open: boolean) => {
       setIsCreateModalOpen(open);
       if (!open) {
-        // modal closed -> reload shipments
         fetchShipments().catch((err) => {
           console.error('Failed to fetch shipments after modal close:', err);
         });
@@ -60,9 +71,15 @@ const ExporterDashboard = () => {
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 text-foreground">Welcome, {user.name}</h1>
-          <p className="text-muted-foreground">{user.organization}</p>
+        {/* Header with logout */}
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2 text-foreground">Welcome, {user.name}</h1>
+            <p className="text-muted-foreground">{user.organization}</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleLogout}>
+            Logout
+          </Button>
         </div>
 
         <div className="grid gap-6 md:grid-cols-4 mb-8">
@@ -154,11 +171,16 @@ const ExporterDashboard = () => {
 
                 <TableBody>
                   {filteredShipments.map((shipment) => {
-                    // defensive property access for compatibility with both shapes
-                    const id = (shipment as any).id ?? (shipment as any).referenceId ?? (shipment as any).reference_id;
+                    const id =
+                      (shipment as any).id ??
+                      (shipment as any).referenceId ??
+                      (shipment as any).reference_id;
                     const created =
-                      (shipment as any).createdAt ?? (shipment as any).created_at ?? Date.now();
-                    const productName = (shipment as any).productName ?? (shipment as any).product_name;
+                      (shipment as any).createdAt ??
+                      (shipment as any).created_at ??
+                      Date.now();
+                    const productName =
+                      (shipment as any).productName ?? (shipment as any).product_name;
                     const quantity = (shipment as any).quantity ?? (shipment as any).qty ?? '';
                     const unit = (shipment as any).unit ?? '';
                     const origin = (shipment as any).origin ?? (shipment as any).origin;

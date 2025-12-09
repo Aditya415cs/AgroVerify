@@ -4,36 +4,72 @@ import { Search, CheckCircle, XCircle, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useApp } from '@/context/AppContext';
+import { supabase } from '@/integrations/supabase/client'; // ✅ use Supabase directly
 
 const Verify = () => {
   const navigate = useNavigate();
-  const { getCertificate } = useApp();
   const [certificateId, setCertificateId] = useState('');
   const [verificationResult, setVerificationResult] = useState<'success' | 'fail' | null>(null);
   const [certificate, setCertificate] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleVerify = (e: React.FormEvent) => {
+  // Helper to map shipment.status to a simple Pass/Fail label
+  const getResultLabel = (status: string): string => {
+    if (status === 'Inspected - Pass' || status === 'Certificate Issued') return 'Pass';
+    if (status === 'Inspected - Fail') return 'Fail';
+    return status;
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!certificateId.trim()) {
+    const trimmed = certificateId.trim();
+    if (!trimmed) return;
+
+    setLoading(true);
+    setVerificationResult(null);
+    setCertificate(null);
+
+    // 🔍 Look up the shipment by ID in Supabase
+    const { data, error } = await supabase
+      .from('shipments')
+      .select('*')
+      .eq('id', trimmed)
+      .maybeSingle();
+
+    if (error || !data) {
+      console.error('Verification error / shipment not found:', error);
+      setVerificationResult('fail');
+      setCertificate(null);
+      setLoading(false);
       return;
     }
 
-    const cert = getCertificate(certificateId.trim());
-
-    if (cert) {
-      setVerificationResult('success');
-      setCertificate(cert);
-    } else {
+    // Only treat as a valid certificate if status is "Certificate Issued"
+    if (data.status !== 'Certificate Issued') {
       setVerificationResult('fail');
       setCertificate(null);
+      setLoading(false);
+      return;
     }
+
+    // Build a "certificate-like" object so existing JSX keeps working
+    const certObj = {
+      id: trimmed,                   // certificate ID shown to user (same as shipment id)
+      shipmentId: data.id,           // underlying shipment id
+      result: getResultLabel(data.status),
+      issuedAt: data.inspected_at ?? data.updated_at ?? data.created_at,
+    };
+
+    setCertificate(certObj);
+    setVerificationResult('success');
+    setLoading(false);
   };
 
   const handleViewCertificate = () => {
     if (certificate) {
-      navigate(`/certificate/${certificate.id}`);
+      // ✅ Our certificate page expects a shipment id at /certification/:id
+      navigate(`/certification/${certificate.shipmentId}`);
     }
   };
 
@@ -72,9 +108,9 @@ const Verify = () => {
                   />
                 </div>
                 <div className="flex gap-3">
-                  <Button type="submit" className="flex-1">
+                  <Button type="submit" className="flex-1" disabled={loading}>
                     <Search className="h-4 w-4 mr-2" />
-                    Verify Certificate
+                    {loading ? 'Verifying…' : 'Verify Certificate'}
                   </Button>
                   <Button type="button" variant="outline" onClick={handleScanQR}>
                     <QrCode className="h-4 w-4 mr-2" />

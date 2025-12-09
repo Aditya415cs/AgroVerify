@@ -19,7 +19,16 @@ const ShipmentDetail = () => {
   }, [user, navigate]);
 
   const shipment = getShipment(id!);
-  const certificate = certificates.find((c) => c.shipmentId === id);
+
+  // Try to find a certificate in context (for QA view etc.)
+  const certificate = certificates.find(
+    (c: any) =>
+      c.shipmentId === id ||
+      c.shipment_id === id ||
+      c.inspection_id === id
+  );
+
+  const isCertificateIssued = shipment?.status === 'Certificate Issued';
 
   if (!shipment) {
     return (
@@ -116,7 +125,7 @@ const ShipmentDetail = () => {
                   <>
                     <Separator />
                     <div>
-                      <h3 className="font-medium mb-2">Notes</h3>
+                      <h3 className="font-medium mb-2">Inspection Comments</h3>
                       <p className="text-sm text-muted-foreground">{shipment.notes}</p>
                     </div>
                   </>
@@ -139,27 +148,39 @@ const ShipmentDetail = () => {
               </CardContent>
             </Card>
 
-            {certificate && (
+            {/* 🎯 Certificate section with "View Certificate" button */}
+            {isCertificateIssued && (
               <Card>
                 <CardHeader>
                   <CardTitle>Certificate</CardTitle>
-                  <CardDescription>Quality certification has been issued for this shipment</CardDescription>
+                  <CardDescription>
+                    Quality certification has been issued for this shipment
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium">Certificate ID</p>
-                        <p className="text-sm text-muted-foreground font-mono">{certificate.id}</p>
+                        <p className="text-sm text-muted-foreground font-mono">
+                          {certificate ? certificate.id : 'Available in certificate view'}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm font-medium">Result</p>
-                        <StatusBadge status={`Inspected - ${certificate.result}` as any} />
+                        <p className="text-sm text-muted-foreground">
+                          {certificate ? (
+                            <StatusBadge status={`Inspected - ${certificate.result}` as any} />
+                          ) : (
+                            'View details in certificate page'
+                          )}
+                        </p>
                       </div>
                     </div>
-                    <Button asChild className="w-full">
-                      <Link to={`/certificate/${certificate.id}`}>View Certificate Details</Link>
-                    </Button>
+<Button asChild className="w-full">
+  <Link to={`/certification/${shipment.id}`}>View Certificate</Link>
+</Button>
+
                   </div>
                 </CardContent>
               </Card>
@@ -190,7 +211,7 @@ const ShipmentDetail = () => {
                     <div className="flex gap-3">
                       <div className="flex flex-col items-center">
                         <div className="w-2 h-2 rounded-full bg-secondary" />
-                        {certificate && <div className="w-0.5 h-full bg-border" />}
+                        {isCertificateIssued && <div className="w-0.5 h-full bg-border" />}
                       </div>
                       <div className="pb-6">
                         <p className="text-sm font-medium">Inspection Completed</p>
@@ -201,7 +222,7 @@ const ShipmentDetail = () => {
                     </div>
                   )}
 
-                  {certificate && (
+                  {isCertificateIssued && (
                     <div className="flex gap-3">
                       <div className="flex flex-col items-center">
                         <div className="w-2 h-2 rounded-full bg-success" />
@@ -209,7 +230,9 @@ const ShipmentDetail = () => {
                       <div>
                         <p className="text-sm font-medium">Certificate Issued</p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(certificate.issuedAt).toLocaleString()}
+                          {certificate?.issuedAt
+                            ? new Date(certificate.issuedAt).toLocaleString()
+                            : 'Issued'}
                         </p>
                       </div>
                     </div>
@@ -221,7 +244,9 @@ const ShipmentDetail = () => {
                         <div className="w-2 h-2 rounded-full bg-muted-foreground" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">Awaiting Inspection</p>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          Awaiting Inspection
+                        </p>
                         <p className="text-xs text-muted-foreground">In queue</p>
                       </div>
                     </div>
