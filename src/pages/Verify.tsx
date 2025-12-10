@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, CheckCircle, XCircle, QrCode } from 'lucide-react';
+import jsQR from 'jsqr'; // ✅ NEW
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client'; // ✅ use Supabase directly
+import { supabase } from '@/integrations/supabase/client';
 
 const Verify = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const Verify = () => {
   const [verificationResult, setVerificationResult] = useState<'success' | 'fail' | null>(null);
   const [certificate, setCertificate] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null); // ✅ NEW
 
   // Helper to map shipment.status to a simple Pass/Fail label
   const getResultLabel = (status: string): string => {
@@ -20,17 +22,15 @@ const Verify = () => {
     return status;
   };
 
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const trimmed = certificateId.trim();
+  // 🔹 Shared verification logic (called from form OR QR)
+  const verifyCertificateById = async (id: string) => {
+    const trimmed = id.trim();
     if (!trimmed) return;
 
     setLoading(true);
     setVerificationResult(null);
     setCertificate(null);
 
-    // 🔍 Look up the shipment by ID in Supabase
     const { data, error } = await supabase
       .from('shipments')
       .select('*')
@@ -45,7 +45,6 @@ const Verify = () => {
       return;
     }
 
-    // Only treat as a valid certificate if status is "Certificate Issued"
     if (data.status !== 'Certificate Issued') {
       setVerificationResult('fail');
       setCertificate(null);
@@ -53,12 +52,11 @@ const Verify = () => {
       return;
     }
 
-    // Build a "certificate-like" object so existing JSX keeps working
     const certObj = {
-      id: trimmed,                   // certificate ID shown to user (same as shipment id)
-      shipmentId: data.id,           // underlying shipment id
+      id: trimmed,
+      shipmentId: data.id,
       result: getResultLabel(data.status),
-      issuedAt: data.inspected_at ?? data.updated_at ?? data.created_at,
+      issuedAt: data.inspected_at ?? (data as any).updated_at ?? data.created_at,
     };
 
     setCertificate(certObj);
@@ -66,16 +64,79 @@ const Verify = () => {
     setLoading(false);
   };
 
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await verifyCertificateById(certificateId);
+  };
+
   const handleViewCertificate = () => {
     if (certificate) {
-      // ✅ Our certificate page expects a shipment id at /certification/:id
       navigate(`/certification/${certificate.shipmentId}`);
     }
   };
 
-  const handleScanQR = () => {
-    // Mock QR scan functionality
-    alert('QR Code scanning not implemented in this demo. Please enter a certificate ID manually.');
+  // ✅ When QR content is decoded from image
+  const handleQrDecode = async (result: string) => {
+    try {
+      // Your QR in the PDF is JSON string: { id, ... }
+      const parsed = JSON.parse(result);
+      if (parsed.id) {
+        setCertificateId(parsed.id);
+        await verifyCertificateById(parsed.id);
+        return;
+      }
+    } catch {
+      // Not JSON? treat as raw ID
+      console.warn('QR is not JSON, using raw value as ID');
+    }
+
+    setCertificateId(result);
+    await verifyCertificateById(result);
+  };
+
+  // ✅ Trigger file chooser
+  const handleUploadQrClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // ✅ Handle selected QR image
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    const img = new Image();
+
+    reader.onload = () => {
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          alert('Could not read this image.');
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+        if (code && code.data) {
+          await handleQrDecode(code.data);
+        } else {
+          alert('Could not detect a QR code in this image.');
+        }
+      };
+
+      img.src = reader.result as string;
+    };
+
+    reader.readAsDataURL(file);
+    // reset input so same file can be re-selected if needed
+    e.target.value = '';
   };
 
   return (
@@ -85,7 +146,7 @@ const Verify = () => {
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4 text-foreground">Verify Certificate</h1>
             <p className="text-lg text-muted-foreground">
-              Enter a certificate ID or scan a QR code to verify authenticity
+              Enter a certificate ID or upload a QR code image to verify authenticity
             </p>
           </div>
 
@@ -112,10 +173,18 @@ const Verify = () => {
                     <Search className="h-4 w-4 mr-2" />
                     {loading ? 'Verifying…' : 'Verify Certificate'}
                   </Button>
-                  <Button type="button" variant="outline" onClick={handleScanQR}>
+                  <Button type="button" variant="outline" onClick={handleUploadQrClick}>
                     <QrCode className="h-4 w-4 mr-2" />
-                    Scan QR
+                    Upload QR
                   </Button>
+                  {/* hidden file input */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
                 </div>
               </form>
             </CardContent>

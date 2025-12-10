@@ -75,11 +75,37 @@ const CertificationD = () => {
     return status;
   };
 
-  // 3️⃣ Download certificate as PDF
+  // 🔹 Build QR payload with the important certificate details
+  const buildQrData = (s: ShipmentRow) => {
+    return JSON.stringify(
+      {
+        id: s.id,
+        product_name: s.product_name,
+        quantity: s.quantity,
+        unit: s.unit,
+        origin: s.origin,
+        reference_id: s.reference_id,
+        status: getResultLabel(s.status),
+        created_at: s.created_at,
+        inspected_at: s.inspected_at,
+        inspection_comments: s.inspection_comments,
+      },
+      null,
+      2
+    );
+  };
+
+  // 3️⃣ Download certificate as PDF (with QR code)
   const handleDownload = async () => {
     if (!shipment) return;
 
+    // dynamic imports to keep bundle smaller
     const { default: jsPDF } = await import("jspdf");
+    const qrcodeModule = await import("qrcode");
+
+    // handle both default + named export styles just in case
+    const QRCode: any = (qrcodeModule as any).default || qrcodeModule;
+
     const doc = new jsPDF();
 
     doc.setFontSize(18);
@@ -95,11 +121,7 @@ const CertificationD = () => {
     doc.text(`Result: ${getResultLabel(shipment.status)}`, 20, 55);
 
     doc.text(`Product: ${shipment.product_name}`, 20, 70);
-    doc.text(
-      `Quantity: ${shipment.quantity} ${shipment.unit}`,
-      20,
-      80
-    );
+    doc.text(`Quantity: ${shipment.quantity} ${shipment.unit}`, 20, 80);
     doc.text(`Origin: ${shipment.origin}`, 20, 90);
     doc.text(`Reference ID: ${shipment.reference_id}`, 20, 100);
 
@@ -110,6 +132,16 @@ const CertificationD = () => {
         110
       );
     }
+
+    // 🔹 Generate QR code as data URL
+    const qrText = buildQrData(shipment);
+    const qrDataUrl = await QRCode.toDataURL(qrText, {
+      width: 200,
+      margin: 1,
+    });
+
+    // 🔹 Add QR image to the PDF (x, y, width, height)
+    doc.addImage(qrDataUrl, "PNG", 140, 20, 50, 50);
 
     doc.save(`certificate-${shipment.id}.pdf`);
   };
