@@ -33,6 +33,7 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
     unit: "kg",
     origin: "",
     referenceId: "",
+    price: "", 
     notes: "",
     criterionName: "Moisture Content",
   });
@@ -44,6 +45,7 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
       unit: "kg",
       origin: "",
       referenceId: "",
+      price: "",  
       notes: "",
       criterionName: "Moisture Content",
     });
@@ -51,7 +53,7 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.productName || !formData.quantity || !formData.origin || !formData.referenceId) {
+    if (!formData.productName || !formData.quantity || !formData.origin || !formData.referenceId ||!formData.price ) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -127,6 +129,7 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
         unit: formData.unit,
         origin: formData.origin,
         reference_id: formData.referenceId,
+        price: Number(formData.price),
         notes: formData.notes || null,
         status: "Pending Inspection",
         exporter_id: supaUser.id, // use Supabase auth UUID
@@ -210,6 +213,22 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
                 />
               </div>
             </div>
+            {/* PRICE */}
+<div className="space-y-2">
+  <Label htmlFor="price">
+    Total Price <span className="text-destructive">*</span>
+  </Label>
+  <Input
+    id="price"
+    type="number"
+    step="0.01"
+    value={formData.price}
+    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+    placeholder="e.g., 25000"
+    required
+  />
+</div>
+
           </div>
 
           {/* ORIGIN */}
