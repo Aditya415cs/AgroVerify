@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { useApp } from '@/context/AppContext';
 import StatusBadge from '@/components/StatusBadge';
+import SupportingFilesList from '@/components/SupportingFilesList';
 
 const ShipmentDetail = () => {
   const { id } = useParams();
@@ -141,6 +142,11 @@ const ShipmentDetail = () => {
                         <p className="text-xs text-muted-foreground mt-2">
                           Inspected on {new Date(shipment.inspectedAt).toLocaleDateString()}
                         </p>
+                      )}
+                      {shipment.supportingDocuments && shipment.supportingDocuments.length > 0 && (
+                        <div className="mt-3">
+                          <SupportingFilesList paths={shipment.supportingDocuments} />
+                        </div>
                       )}
                     </div>
                   </>

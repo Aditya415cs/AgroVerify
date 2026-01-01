@@ -25,6 +25,7 @@ export interface Shipment {
   inspectionComments?: string;
   inspectedAt?: string;
   inspectorId?: string;
+    supportingDocuments?: string[];
 }
 
 export interface Certificate { [k: string]: any; }
@@ -90,6 +91,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         inspectionComments: r.inspection_comments ?? undefined,
         inspectedAt: r.inspected_at ?? undefined,
         inspectorId: r.inspector_id ?? undefined,
+        supportingDocuments: r.supporting_documents ?? undefined,
       })) as Shipment[];
 
       setShipments(mapped);
@@ -126,6 +128,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (updates.notes !== undefined) payload.notes = updates.notes ?? null;
     if (updates.status !== undefined) payload.status = updates.status;
     if (updates.qualityCriterion !== undefined) payload.quality_criteria = updates.qualityCriterion;
+    if ((updates as any).supportingDocuments !== undefined) payload.supporting_documents = (updates as any).supportingDocuments;
     if (updates.inspectionComments !== undefined) payload.inspection_comments = updates.inspectionComments ?? null;
     if (updates.inspectedAt !== undefined) payload.inspected_at = updates.inspectedAt;
     if (updates.inspectorId !== undefined) payload.inspector_id = updates.inspectorId;
@@ -143,7 +146,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const supaUser = authData?.user;
 
       if (!supaUser) {
-        // Demo/local mode: if this row exists in localStorage 'agrofy:local_shipments', update it there
+        
         try {
           const key = 'agrofy:local_shipments';
           const existing = JSON.parse(localStorage.getItem(key) || '[]');
@@ -174,16 +177,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Make DB update
       const { data, error } = await (supabase as any).from('shipments').update(payload).eq('id', id).select('*').single();
       if (error) {
-        console.warn('Failed to persist shipment update to Supabase', error);
-        // surface to diagnostics so QA can see RLS/auth errors in the UI
-        setDiagnostics({ lastFetchCount: null, lastFetchRole: user?.role ?? null, lastFetchError: error.message || String(error) });
+        console.error('Failed to persist shipment update to Supabase', error);
+        try {
+          // eslint-disable-next-line no-console
+          console.debug('[AppContext] Supabase update error details', { id, payload, error });
+          
+          console.error('Supabase error (stringified):', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+        } catch (e) {}
+      
+        const errMsg = (error && (error.message || JSON.stringify(error))) || String(error);
+        setDiagnostics({ lastFetchCount: null, lastFetchRole: user?.role ?? null, lastFetchError: errMsg });
         return false;
       }
 
       if (data) {
         const mapped = mapRowToShipment(data);
         setShipments((prev) => prev.map((s) => (s.id === mapped.id ? mapped : s)));
-        // clear any prior diagnostics error
+      
         setDiagnostics({ lastFetchCount: null, lastFetchRole: user?.role ?? null, lastFetchError: null });
         return true;
       }
@@ -202,7 +212,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       await updateShipment((c as any).shipmentId, { status: "Certificate Issued" } as Partial<Shipment>);
     } catch (e) {
-      // updateShipment returns boolean; if it throws, log it
+      
       console.warn('addCertificate: failed to update shipment status to Certificate Issued', e);
     }
   };
@@ -220,7 +230,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const { data } = await supabase.auth.getUser();
       if (data?.user) {
         const su = data.user as any;
-        // Map and then attempt to read authoritative profile row to get role/name/org
+        
         const mappedUser: User = {
           id: su.id,
           name: (su.user_metadata && su.user_metadata.name) || su.email || 'Unknown',
@@ -248,7 +258,7 @@ try {
 
 
         setUser(mappedUser);
-        // attempt to sync any locally persisted demo shipments into Supabase now that we have a session
+       
         try {
           await syncLocalShipmentsToSupabase(mappedUser);
         } catch (err) {
@@ -316,9 +326,7 @@ try {
     }
 
     fetchShipments();
-    // Subscribe differently for QA vs Exporter:
-    // - exporter: subscribe only to rows where exporter_id === user.id
-    // - qa: subscribe to all shipments so QA sees new pending inspections
+ 
     if (user.role === 'exporter') {
       channel = (supabase as any)
         .channel(`shipments-exporter-${user.id}`)
@@ -326,7 +334,7 @@ try {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'shipments', filter: `exporter_id=eq.${user.id}` },
           (payload: any) => {
-            // Log realtime payloads to help diagnose missing updates
+          
             try {
               // eslint-disable-next-line no-console
               console.debug('[Realtime][exporter] payload', { role: user.role, userId: user.id, payload });
@@ -404,6 +412,7 @@ try {
       inspectionComments: r.inspection_comments ?? undefined,
       inspectedAt: r.inspected_at ?? undefined,
       inspectorId: r.inspector_id ?? undefined,
+      supportingDocuments: r.supporting_documents ?? undefined,
     } as Shipment;
   }
 

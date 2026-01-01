@@ -11,6 +11,8 @@ import { Separator } from '@/components/ui/separator';
 import { useApp } from '@/context/AppContext';
 import StatusBadge from '@/components/StatusBadge';
 import { toast } from 'sonner';
+import SupportingFilesList from '@/components/SupportingFilesList';
+import { supabase } from '@/integrations/supabase/client';
 
 const Inspection = () => {
   const { shipmentId } = useParams();
@@ -23,6 +25,9 @@ const Inspection = () => {
     result: 'Pass',
     comments: '',
   });
+
+  const [supportingFiles, setSupportingFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!user || user.role !== 'qa') {
@@ -59,13 +64,52 @@ const Inspection = () => {
       inspectorId: user!.id,
     };
 
+   
+    let supportingUrls: string[] | undefined = undefined;
+    if (supportingFiles.length > 0) {
+      setUploading(true);
+      // Ensure there's an authenticated Supabase session before attempting uploads.
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData?.session || !sessionData.session.user) {
+          toast.error('You must be signed in to upload files');
+          setUploading(false);
+          return;
+        }
+      } catch (err) {
+        toast.error('Auth check failed; cannot upload files');
+        setUploading(false);
+        return;
+      }
+      const supportingPaths: string[] = [];
+      for (const f of supportingFiles) {
+        try {
+          const timestamp = Date.now();
+          const path = `documents/${shipment.id}/${timestamp}_${f.name}`;
+          const { data, error } = await supabase.storage.from('documents').upload(path, f, { upsert: true });
+          if (error) {
+            console.warn('Failed to upload file', f.name, error);
+            toast.error(`Failed to upload ${f.name}`);
+            continue;
+          }
+          if (data?.path) supportingPaths.push(data.path);
+        } catch (err) {
+          console.error('upload error', err);
+          toast.error(`Upload failed for ${f.name}`);
+        }
+      }
+      setUploading(false);
+
+      if (supportingPaths.length > 0) (inspectionData as any).supportingDocuments = supportingPaths;
+    }
+
     const ok = await updateShipment(shipment.id, inspectionData);
     if (!ok) {
       toast.error('Failed to save inspection — check diagnostics or console for details');
       return;
     }
 
-    // If passed, generate certificate
+   
     if (formData.result === 'Pass') {
       const certificate = {
         id: `CERT-${String(Date.now()).slice(-6)}`,
@@ -178,6 +222,9 @@ const Inspection = () => {
                   <p className="text-sm font-medium">Comments</p>
                   <p className="text-sm text-muted-foreground">{shipment.inspectionComments}</p>
                 </div>
+                {shipment.supportingDocuments && shipment.supportingDocuments.length > 0 && (
+                  <SupportingFilesList paths={shipment.supportingDocuments} />
+                )}
                 <div>
                   <p className="text-sm font-medium">Inspected</p>
                   <p className="text-sm text-muted-foreground">
@@ -240,10 +287,44 @@ const Inspection = () => {
 
                 <div className="space-y-2">
                   <Label>Supporting Documents (Optional)</Label>
-                  <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
                     <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                     <p className="text-sm text-muted-foreground">Upload lab reports, photos, or other documents</p>
-                    <p className="text-xs text-muted-foreground mt-1">(File upload UI only - not functional)</p>
+                    <p className="text-xs text-muted-foreground mt-1">You can upload multiple files (PDF, JPG, PNG)</p>
+                    <div className="mt-3">
+                      <input
+                        type="file"
+                        multiple
+                        onChange={(e) => {
+                          const files = e.target.files;
+                          if (!files) return;
+                          setSupportingFiles(Array.from(files));
+                        }}
+                        className="mx-auto"
+                      />
+                    </div>
+
+                    {supportingFiles.length > 0 && (
+                      <div className="mt-3 text-left">
+                        <p className="text-sm font-medium mb-2">Selected files:</p>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          {supportingFiles.map((f, idx) => (
+                            <li key={idx} className="flex items-center justify-between">
+                              <span>{f.name} ({Math.round(f.size/1024)} KB)</span>
+                              <button
+                                type="button"
+                                onClick={() => setSupportingFiles((prev) => prev.filter((_, i) => i !== idx))}
+                                className="text-xs text-destructive ml-2"
+                              >
+                                Remove
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {uploading && <p className="text-sm text-muted-foreground mt-2">Uploading files…</p>}
                   </div>
                 </div>
 

@@ -10,22 +10,18 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isTranslateOpen, setIsTranslateOpen] = useState(false);
 
-  // Keep the selector wrapper always present in the DOM (but hidden)
-  // so `dropdown.js` can render the control into it. We'll toggle
-  // visibility of that wrapper below when user opens the translate menu.
+
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     try {
       const el = wrapperRef.current;
       if (!el) return;
       el.style.display = isTranslateOpen ? 'block' : 'none';
-      // If opening and widget not yet rendered, append the dropdown.js
-      // script dynamically so it can render into the just-mounted wrapper.
+ 
       if (isTranslateOpen && el.innerHTML.trim().length === 0) {
-        // avoid repeated dynamic loads
-        // @ts-ignore
+       
         if ((window as any).__gtranslate_dropdown_loading) return;
-        // @ts-ignore
+       
         (window as any).__gtranslate_dropdown_loading = true;
         const s = document.createElement('script');
         s.src = 'https://cdn.gtranslate.net/widgets/latest/dropdown.js?ts=' + Date.now();
@@ -33,15 +29,15 @@ const Navbar = () => {
         s.setAttribute('data-gtranslate-dynamic', '1');
         s.defer = true;
         s.onload = function() {
-          // clear flag after a short delay
+         
           setTimeout(() => {
-            // @ts-ignore
+            
             (window as any).__gtranslate_dropdown_loading = false;
             try { setupGTranslateChangeHandler('en'); } catch (e) {}
           }, 200);
         };
         s.onerror = function() {
-          // @ts-ignore
+      
           (window as any).__gtranslate_dropdown_loading = false;
         };
         document.body.appendChild(s);
@@ -58,7 +54,7 @@ const Navbar = () => {
 
   const handleAboutClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    // delegate to generic scroller
+   
     handleScrollTo('about');
   };
 
@@ -219,26 +215,14 @@ function setupGTranslateChangeHandler(defaultLang: string) {
   } catch (e) {}
 }
 
-// Programmatic reset: set googtrans cookie to default and attempt to call
-// (no programmatic reset function — we rely on the change handler)
 
-// Hook into popover open changes by observing attribute changes on the
-// popover trigger area — this is a defensive fallback in case the
-// component mounts/unmounts in ways that prevent the effect in the
-// component from running. We also attach a short interval to attempt
-// loading if the wrapper appears slightly later.
-// Attach the change handler once when running in browser. We rely on the
-// single `dropdown.js` script already included in `index.html` to render
-// the widget into `#gtranslate-root`.
 if (typeof window !== 'undefined') {
   try {
-    // attach handler immediately in case widget is already present
+    
     setupGTranslateChangeHandler('en');
   } catch (e) {}
 }
 
-// Show/hide the persistent widget when popover opens.
-// We add a small exported hook to toggle visibility from React.
 export function toggleGTranslateRoot(show: boolean) {
   try {
     const el = document.getElementById('gtranslate-root');
