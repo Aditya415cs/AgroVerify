@@ -148,7 +148,6 @@ const ShipmentDetail = () => {
               </CardContent>
             </Card>
 
-            {/* 🎯 Certificate section with "View Certificate" button */}
             {isCertificateIssued && (
               <Card>
                 <CardHeader>

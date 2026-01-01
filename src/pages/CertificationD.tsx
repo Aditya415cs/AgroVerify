@@ -28,7 +28,6 @@ type ShipmentRow = {
 };
 
 const CertificationD = () => {
-  // we now treat :id as the SHIPMENT id
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -36,7 +35,6 @@ const CertificationD = () => {
   const [shipment, setShipment] = useState<ShipmentRow | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // 1️⃣ Load shipment from Supabase
   useEffect(() => {
     if (!id) return;
 
@@ -64,7 +62,6 @@ const CertificationD = () => {
     loadShipment();
   }, [id]);
 
-  // 2️⃣ Compute a “result” from shipment.status
   const getResultLabel = (status: string): string => {
     if (status === "Inspected - Pass" || status === "Certificate Issued") {
       return "Pass";
@@ -75,7 +72,6 @@ const CertificationD = () => {
     return status;
   };
 
-  // 🔹 Build QR payload with the important certificate details
   const buildQrData = (s: ShipmentRow) => {
     return JSON.stringify(
       {
@@ -95,15 +91,12 @@ const CertificationD = () => {
     );
   };
 
-  // 3️⃣ Download certificate as PDF (with QR code)
   const handleDownload = async () => {
     if (!shipment) return;
 
-    // dynamic imports to keep bundle smaller
     const { default: jsPDF } = await import("jspdf");
     const qrcodeModule = await import("qrcode");
 
-    // handle both default + named export styles just in case
     const QRCode: any = (qrcodeModule as any).default || qrcodeModule;
 
     const doc = new jsPDF();
@@ -133,20 +126,17 @@ const CertificationD = () => {
       );
     }
 
-    // 🔹 Generate QR code as data URL
     const qrText = buildQrData(shipment);
     const qrDataUrl = await QRCode.toDataURL(qrText, {
       width: 200,
       margin: 1,
     });
 
-    // 🔹 Add QR image to the PDF (x, y, width, height)
     doc.addImage(qrDataUrl, "PNG", 140, 20, 50, 50);
 
     doc.save(`certificate-${shipment.id}.pdf`);
   };
 
-  // 4️⃣ Loading / error states
   if (loading) {
     return (
       <div className="min-h-screen bg-muted/30 flex items-center justify-center">
@@ -173,7 +163,6 @@ const CertificationD = () => {
     );
   }
 
-  // 5️⃣ Render certificate view based on shipment
   const resultText = getResultLabel(shipment.status);
 
   return (
@@ -203,7 +192,6 @@ const CertificationD = () => {
           <CardContent className="space-y-6">
             <Separator />
 
-            {/* Certificate core info (using shipment id as certificate id) */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <p className="text-sm font-medium">Certificate / Shipment ID</p>
@@ -220,7 +208,6 @@ const CertificationD = () => {
               </div>
             </div>
 
-            {/* Shipment info */}
             <Separator />
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -249,7 +236,6 @@ const CertificationD = () => {
               </div>
             </div>
 
-            {/* Result & comments */}
             <Separator />
             <div className="space-y-2">
               <p className="text-sm font-medium">Inspection Result</p>

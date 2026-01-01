@@ -4,8 +4,11 @@ import TiltedCard from '@/components/ui/TiltedCard';
 import BlurText from "@/components/ui/BlurText";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { Instagram, Phone, MessageCircle, Mail, MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Landing = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen bg-background">
 
@@ -79,7 +82,21 @@ const Landing = () => {
               delay={80}
               className="text-3xl md:text-4xl font-bold mb-6 text-foreground justify-center"
             />
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto"></p>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-4">
+              Agrofy is a digital verification platform designed to bring trust, transparency, and traceability to the agricultural export ecosystem. We enable exporters, quality assurance agencies, and importers to collaborate on a single platform for product inspection, certification, and verification.
+            </p>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-4">
+              In global agri-trade, the credibility of quality certificates is critical. Traditional paper-based certificates are often slow, difficult to verify, and vulnerable to tampering. Agrofy solves this problem by issuing secure, verifiable digital certificates backed by modern cryptographic standards.
+            </p>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-4">
+              Our platform allows exporters to upload product and batch details, QA agencies to conduct and log inspections, and approved products to receive Verifiable Digital Certificates (Digital Product Passports). These certificates can be instantly verified by importers and authorities using QR-based verification via Inji Verify, ensuring authenticity and eliminating fraud.
+            </p>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-4">
+              Agrofy is built on open digital identity standards, enabling tamper-proof, privacy-preserving, and globally verifiable credentials. By combining inspection workflows with verifiable credentials, Agrofy helps businesses reduce compliance friction, accelerate exports, and build trust across borders.
+            </p>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              Our mission is to create a trusted digital infrastructure for agri-exports, where every verified product carries a proof of quality that can be instantly validated—anytime, anywhere.
+            </p>
             <div className="mt-6">
               <a href="/" className="text-sm text-primary hover:underline">Back to top</a>
             </div>

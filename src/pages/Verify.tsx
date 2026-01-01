@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, CheckCircle, XCircle, QrCode } from 'lucide-react';
-import jsQR from 'jsqr'; // ✅ NEW
+import jsQR from 'jsqr';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,16 +13,14 @@ const Verify = () => {
   const [verificationResult, setVerificationResult] = useState<'success' | 'fail' | null>(null);
   const [certificate, setCertificate] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null); // ✅ NEW
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Helper to map shipment.status to a simple Pass/Fail label
   const getResultLabel = (status: string): string => {
     if (status === 'Inspected - Pass' || status === 'Certificate Issued') return 'Pass';
     if (status === 'Inspected - Fail') return 'Fail';
     return status;
   };
 
-  // 🔹 Shared verification logic (called from form OR QR)
   const verifyCertificateById = async (id: string) => {
     const trimmed = id.trim();
     if (!trimmed) return;
@@ -75,10 +73,8 @@ const Verify = () => {
     }
   };
 
-  // ✅ When QR content is decoded from image
   const handleQrDecode = async (result: string) => {
     try {
-      // Your QR in the PDF is JSON string: { id, ... }
       const parsed = JSON.parse(result);
       if (parsed.id) {
         setCertificateId(parsed.id);
@@ -86,7 +82,6 @@ const Verify = () => {
         return;
       }
     } catch {
-      // Not JSON? treat as raw ID
       console.warn('QR is not JSON, using raw value as ID');
     }
 
@@ -94,12 +89,10 @@ const Verify = () => {
     await verifyCertificateById(result);
   };
 
-  // ✅ Trigger file chooser
   const handleUploadQrClick = () => {
     fileInputRef.current?.click();
   };
 
-  // ✅ Handle selected QR image
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -135,7 +128,6 @@ const Verify = () => {
     };
 
     reader.readAsDataURL(file);
-    // reset input so same file can be re-selected if needed
     e.target.value = '';
   };
 

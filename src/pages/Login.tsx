@@ -28,7 +28,7 @@ const Login = () => {
       return;
     }
 
-    // Use Supabase email/password sign-in
+
     (async () => {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -44,7 +44,7 @@ const Login = () => {
           return;
         }
 
-        // Fetch the user's profile row to get authoritative role/name/org
+        
         try {
           const { data: profileData, error: profileErr } = await supabase.from('profiles').select('*').eq('id', supaUser.id).maybeSingle();
           if (profileErr) {
@@ -55,7 +55,7 @@ const Login = () => {
           const nameFromProfile = (profileData as any)?.name || (supaUser.user_metadata as any)?.name || (selectedRole === 'exporter' ? 'Exporter' : 'QA Agent');
           const orgFromProfile = (profileData as any)?.organization || (supaUser.user_metadata as any)?.organization || '';
 
-          // Ensure profile exists (upsert) in case signUp didn't create it
+          
           try {
             await supabase.from('profiles').upsert({ id: supaUser.id, email: supaUser.email, name: nameFromProfile, role: roleFromProfile, organization: orgFromProfile });
           } catch (e) {
@@ -73,7 +73,7 @@ const Login = () => {
           setUser(appUser);
           toast.success('Login successful!');
 
-          // Navigate to appropriate dashboard
+          
           if ((appUser.role as UserRole) === 'exporter') {
             navigate('/exporter/dashboard');
           } else {
@@ -81,7 +81,7 @@ const Login = () => {
           }
         } catch (e) {
           console.error('Profile fetch/upsert error:', e);
-          // fallback to metadata/selectedRole
+        
           const appUser = {
             id: supaUser.id,
             name: (supaUser.user_metadata as any)?.name || (selectedRole === 'exporter' ? 'Exporter' : 'QA Agent'),

@@ -47,7 +47,6 @@ const Signup = () => {
         return;
       }
 
-      // If we received a user back (some Supabase configs return user immediately), upsert a profile row
       const supaUser = (data as any)?.user;
       if (supaUser && supaUser.id) {
         try {

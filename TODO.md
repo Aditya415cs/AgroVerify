@@ -1,0 +1,2 @@
+- [x] Add GTranslate scripts to index.html head
+- [x] Modify Navbar.tsx to replace Translate button with Popover containing gtranslate_wrapper
