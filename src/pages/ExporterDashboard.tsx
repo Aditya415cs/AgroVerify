@@ -162,6 +162,7 @@ const ExporterDashboard = () => {
                     <TableHead>Shipment ID</TableHead>
                     <TableHead>Product Name</TableHead>
                     <TableHead>Quantity</TableHead>
+                    <TableHead>Price</TableHead>
                     <TableHead>Origin</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
@@ -182,6 +183,11 @@ const ExporterDashboard = () => {
                     const productName =
                       (shipment as any).productName ?? (shipment as any).product_name;
                     const quantity = (shipment as any).quantity ?? (shipment as any).qty ?? '';
+                    const price =
+  (shipment as any).price ??
+  (shipment as any).total_price ??
+  0;
+
                     const unit = (shipment as any).unit ?? '';
                     const origin = (shipment as any).origin ?? (shipment as any).origin;
                     const status = (shipment as any).status;
@@ -192,6 +198,9 @@ const ExporterDashboard = () => {
                         <TableCell>
                           {quantity} {unit}
                         </TableCell>
+                        <TableCell>
+  ₹{Number(price).toLocaleString()}
+</TableCell>
                         <TableCell>{origin}</TableCell>
                         <TableCell>
                           <StatusBadge status={status} />
@@ -216,5 +225,6 @@ const ExporterDashboard = () => {
     </div>
   );
 };
+
 
 export default ExporterDashboard;

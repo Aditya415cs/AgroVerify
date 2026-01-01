@@ -14,6 +14,7 @@ export interface Shipment {
   productName: string;
   quantity: number;
   unit: string;
+  price: number;
   origin: string;
   referenceId: string;
   notes?: string | null;
@@ -80,6 +81,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         unit: r.unit,
         origin: r.origin,
         referenceId: r.reference_id,
+        price: Number(r.price ?? 0),
         notes: r.notes ?? undefined,
         status: r.status,
         exporterId: r.exporter_id,
@@ -227,16 +229,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           organization: (su.user_metadata && su.user_metadata.organization) || '',
         };
 
-        try {
-          const { data: profileData, error: profileErr } = await supabase.from('profiles').select('*').eq('id', su.id).maybeSingle();
-          if (!profileErr && profileData) {
-            mappedUser.role = (profileData as any).role || mappedUser.role;
-            mappedUser.name = (profileData as any).name || mappedUser.name;
-            mappedUser.organization = (profileData as any).organization || mappedUser.organization;
-          }
-        } catch (e) {
-          console.warn('Failed to fetch profile on mount:', e);
-        }
+try {
+  const { data: profileData, error: profileErr } =
+    await (supabase as any)
+      .from('profiles')
+      .select('*')
+      .eq('id', su.id)
+      .maybeSingle();
+
+  if (!profileErr && profileData) {
+    mappedUser.role = profileData.role || mappedUser.role;
+    mappedUser.name = profileData.name || mappedUser.name;
+    mappedUser.organization = profileData.organization || mappedUser.organization;
+  }
+} catch (e) {
+  console.warn('Failed to fetch profile on mount:', e);
+}
+
 
         setUser(mappedUser);
         // attempt to sync any locally persisted demo shipments into Supabase now that we have a session
@@ -261,16 +270,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         // fetch profile row and override role if present
         (async () => {
-          try {
-            const { data: profileData, error: profileErr } = await supabase.from('profiles').select('*').eq('id', su.id).maybeSingle();
-            if (!profileErr && profileData) {
-              mappedUser.role = (profileData as any).role || mappedUser.role;
-              mappedUser.name = (profileData as any).name || mappedUser.name;
-              mappedUser.organization = (profileData as any).organization || mappedUser.organization;
-            }
-          } catch (e) {
-            console.warn('Failed to fetch profile on auth change:', e);
-          }
+try {
+  const { data: profileData, error: profileErr } =
+    await (supabase as any)
+      .from('profiles')
+      .select('*')
+      .eq('id', su.id)
+      .maybeSingle();
+
+  if (!profileErr && profileData) {
+    mappedUser.role = profileData.role || mappedUser.role;
+    mappedUser.name = profileData.name || mappedUser.name;
+    mappedUser.organization = profileData.organization || mappedUser.organization;
+  }
+} catch (e) {
+  console.warn('Failed to fetch profile on auth change:', e);
+}
+
 
           setUser(mappedUser);
         })();
@@ -379,6 +395,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       unit: r.unit,
       origin: r.origin,
       referenceId: r.reference_id,
+      price: Number(r.price ?? 0),
       notes: r.notes ?? undefined,
       status: r.status,
       exporterId: r.exporter_id,
@@ -426,6 +443,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           quantity: row.quantity,
           unit: row.unit,
           origin: row.origin,
+          price: row.price ?? 0,
           reference_id: row.referenceId,
           notes: row.notes ?? null,
           status: row.status || 'Pending Inspection',
