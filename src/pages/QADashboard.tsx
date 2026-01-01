@@ -24,6 +24,9 @@ const QADashboard = () => {
 
   const pendingInspections = shipments.filter((s) => s.status === 'Pending Inspection');
   const completedInspections = shipments.filter((s) => s.status !== 'Pending Inspection');
+  const issuedCertificates = shipments.filter(
+    (s) => s.status === "Certificate Issued"
+  );
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -46,12 +49,12 @@ const QADashboard = () => {
               <CardTitle className="text-3xl">{completedInspections.length}</CardTitle>
             </CardHeader>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Certificates Issued</CardDescription>
-              <CardTitle className="text-3xl">{certificates.length}</CardTitle>
-            </CardHeader>
-          </Card>
+<Card>
+  <CardHeader className="pb-2">
+    <CardDescription>Certificates Issued</CardDescription>
+    <CardTitle className="text-3xl">{issuedCertificates.length}</CardTitle>
+  </CardHeader>
+</Card>
         </div>
 
         <div className="space-y-6">
