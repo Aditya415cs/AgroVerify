@@ -63,6 +63,11 @@ const Landing = () => {
 
               <Button asChild size="lg" variant="outline"
                 className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground/20">
+                <Link to="/login?role=importer">Login as Importer</Link>
+              </Button>
+
+              <Button asChild size="lg" variant="outline"
+                className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground/20">
                 <Link to="/verify">Verify Certificate</Link>
               </Button>
             </div>
@@ -89,10 +94,7 @@ const Landing = () => {
               In global agri-trade, the credibility of quality certificates is critical. Traditional paper-based certificates are often slow, difficult to verify, and vulnerable to tampering. Agrofy solves this problem by issuing secure, verifiable digital certificates backed by modern cryptographic standards.
             </p>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-4">
-              Our platform allows exporters to upload product and batch details, QA agencies to conduct and log inspections, and approved products to receive Verifiable Digital Certificates (Digital Product Passports). These certificates can be instantly verified by importers and authorities using QR-based verification via Inji Verify, ensuring authenticity and eliminating fraud.
-            </p>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-4">
-              Agrofy is built on open digital identity standards, enabling tamper-proof, privacy-preserving, and globally verifiable credentials. By combining inspection workflows with verifiable credentials, Agrofy helps businesses reduce compliance friction, accelerate exports, and build trust across borders.
+              Our platform allows exporters to upload product and batch details, QA agencies to conduct and log inspections, and approved products to receive Verifiable Digital Certificates. These certificates can be instantly verified by importers and authorities using QR-based verification, ensuring authenticity and eliminating fraud.
             </p>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Our mission is to create a trusted digital infrastructure for agri-exports, where every verified product carries a proof of quality that can be instantly validated—anytime, anywhere.

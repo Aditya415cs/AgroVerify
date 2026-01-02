@@ -66,18 +66,7 @@ const QADashboard = () => {
             <CardContent>
               {pendingInspections.length === 0 ? (
                 <div className="text-center py-12">
-                  <ClipboardCheck className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No pending inspections</p>
-                  <div className="mt-4 text-sm text-muted-foreground max-w-lg mx-auto">
-                    <p>If you expect shipments to appear but see none, check the diagnostics below for what the app fetched from the database.</p>
-                    <div className="mt-3 p-3 bg-muted/20 rounded">
-                      <strong>Diagnostics:</strong>
-                      <div className="text-sm mt-2">
-                        <pre id="qa-diagnostics" className="whitespace-pre-wrap text-xs">{JSON.stringify(diagnostics ?? { lastFetchCount: null, lastFetchRole: user?.role ?? null, lastFetchError: null }, null, 2)}</pre>
-                      </div>
-                    </div>
-                    <p className="mt-2 text-xs text-muted-foreground">If diagnostics show 0 results but you see rows in the DB, Row-Level Security (RLS) or auth is likely blocking reads — I can provide RLS policies to fix that.</p>
-                  </div>
+                  <p className="text-lg font-medium text-muted-foreground">No pending inspections</p>
                 </div>
               ) : (
                 <Table>

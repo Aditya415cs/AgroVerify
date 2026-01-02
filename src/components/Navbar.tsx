@@ -116,6 +116,14 @@ const Navbar = () => {
                     Exporter
                   </Link>
                 )}
+                {user.role === 'importer' && (
+                  <Link
+                    to="/importer"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Importer
+                  </Link>
+                )}
                 {user.role === 'qa' && (
                   <Link
                     to="/qa/dashboard"

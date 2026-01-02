@@ -74,11 +74,14 @@ const Login = () => {
           toast.success('Login successful!');
 
           
-          if ((appUser.role as UserRole) === 'exporter') {
-            navigate('/exporter/dashboard');
-          } else {
-            navigate('/qa/dashboard');
-          }
+if (appUser.role === 'exporter') {
+  navigate('/exporter/dashboard');
+} else if (appUser.role === 'importer') {
+  navigate('/importer');
+} else {
+  navigate('/qa/dashboard');
+}
+
         } catch (e) {
           console.error('Profile fetch/upsert error:', e);
         
@@ -114,13 +117,14 @@ const Login = () => {
               <Shield className="h-6 w-6 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Welcome to Certify</CardTitle>
+          <CardTitle className="text-2xl text-center">Welcome to Agrofy</CardTitle>
           <CardDescription className="text-center">Login to your account to continue</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={selectedRole} onValueChange={(v) => setSelectedRole(v as UserRole)}>
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="exporter">Exporter</TabsTrigger>
+              <TabsTrigger value="importer">Importer</TabsTrigger>
               <TabsTrigger value="qa">QA Agent</TabsTrigger>
             </TabsList>
 
@@ -149,7 +153,14 @@ const Login = () => {
                   />
                 </div>
                 <Button type="submit" className="w-full">
-                  Login as {selectedRole === 'exporter' ? 'Exporter' : 'QA Agent'}
+                  Login as {
+  selectedRole === 'exporter'
+    ? 'Exporter'
+    : selectedRole === 'importer'
+    ? 'Importer'
+    : 'QA Agent'
+}
+
                 </Button>
               </form>
             </TabsContent>

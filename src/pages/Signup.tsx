@@ -47,20 +47,34 @@ const Signup = () => {
         return;
       }
 
-      const supaUser = (data as any)?.user;
-      if (supaUser && supaUser.id) {
-        try {
-          await supabase.from('profiles').upsert({
-            id: supaUser.id,
-            name: formData.name,
-            email: formData.email,
-            organization: formData.organization,
-            role: formData.role,
-          });
-        } catch (e) {
-          console.warn('Failed to create profile on signup:', e);
-        }
-      }
+const supaUser = (data as any)?.user;
+
+if (supaUser && supaUser.id) {
+  try {
+    // Always create/update profile
+    await supabase.from('profiles').upsert({
+      id: supaUser.id,
+      name: formData.name,
+      email: formData.email,
+      organization: formData.organization,
+      role: formData.role,
+    });
+
+    // If user is importer, also create importer record
+    if (formData.role === "importer") {
+      await supabase.from("importers").upsert({
+        id: supaUser.id,
+        name: formData.name,
+        email: formData.email,
+        organization: formData.organization,
+      });
+    }
+
+  } catch (e) {
+    console.warn('Failed to create profile/importer on signup:', e);
+  }
+}
+
 
       // If sign-up succeeds, the user may need to confirm their email depending on Supabase settings
       toast.success('Account created! Please check your email to confirm, then log in.');
@@ -137,6 +151,7 @@ const Signup = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="exporter">Exporter</SelectItem>
+                  <SelectItem value="importer">Importer</SelectItem>
                   <SelectItem value="qa">QA Agent</SelectItem>
                 </SelectContent>
               </Select>

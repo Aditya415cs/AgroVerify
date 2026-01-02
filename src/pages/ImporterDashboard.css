@@ -1,0 +1,62 @@
+.importer-dashboard {
+  padding: 24px;
+}
+
+.importer-dashboard h2 {
+  margin-bottom: 16px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+th,
+td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
+.status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.status.pending {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.status.certified {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.buy-btn {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.buy-btn:hover {
+  background: #15803d;
+}
+
+.disabled {
+  color: #9ca3af;
+}
+
+.muted {
+  color: #9ca3af;
+}

@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { supabase } from "@/integrations/supabase/client";
 
 
-export type UserRole = "exporter" | "qa";
+export type UserRole = "exporter" | "qa" | "importer";
 export interface User { id: string; name: string; email: string; role: UserRole; organization: string; }
 export type ShipmentStatus = "Pending Inspection" | "Inspected - Pass" | "Inspected - Fail" | "Certificate Issued";
 
@@ -20,6 +20,7 @@ export interface Shipment {
   notes?: string | null;
   status: ShipmentStatus;
   exporterId: string;
+  importerId?: string;
   createdAt: string;
   qualityCriterion?: QualityCriterion | null;
   inspectionComments?: string;
@@ -67,6 +68,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       let query: any = (supabase as any).from('shipments').select('*').order('created_at', { ascending: false });
       if (user.role === 'exporter') {
         query = query.eq('exporter_id', user.id);
+      } else if (user.role === 'importer') {
+        // Importer should only see shipments assigned to them
+        query = query.eq('importer_id', user.id);
       }
 
       const { data, error } = await query;
@@ -86,6 +90,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         notes: r.notes ?? undefined,
         status: r.status,
         exporterId: r.exporter_id,
+        importerId: r.importer_id ?? undefined,
         createdAt: r.created_at,
         qualityCriterion: r.quality_criteria ?? undefined,
         inspectionComments: r.inspection_comments ?? undefined,
@@ -228,6 +233,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getUser();
+      // Temporary debug: print Supabase auth user to browser console
+      try {
+        // eslint-disable-next-line no-console
+        console.debug('[Supabase] initial auth user:', data?.user ?? null);
+      } catch (e) {}
       if (data?.user) {
         const su = data.user as any;
         
@@ -268,6 +278,12 @@ try {
     })();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Log auth changes for debugging (who is logged in)
+      try {
+        // eslint-disable-next-line no-console
+        console.debug('[Supabase] auth state change, session user:', session?.user ?? null);
+      } catch (e) {}
+
       if (session?.user) {
         const su = session.user as any;
         const mappedUser: User = {
@@ -358,6 +374,37 @@ try {
           }
         )
         .subscribe();
+    } else if (user.role === 'importer') {
+      // Importer: subscribe to shipments assigned to this importer
+      channel = (supabase as any)
+        .channel(`shipments-importer-${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'shipments', filter: `importer_id=eq.${user.id}` },
+          (payload: any) => {
+            try {
+              // eslint-disable-next-line no-console
+              console.debug('[Realtime][importer] payload', { role: user.role, userId: user.id, payload });
+            } catch (e) {
+              // ignore
+            }
+
+            const ev = payload.eventType;
+            const newRow = payload.new;
+            const oldRow = payload.old;
+
+            if (ev === 'INSERT' && newRow) {
+              const mapped = mapRowToShipment(newRow);
+              setShipments((prev) => (prev.some((s) => s.id === mapped.id) ? prev : [mapped, ...prev]));
+            } else if (ev === 'UPDATE' && newRow) {
+              const mapped = mapRowToShipment(newRow);
+              setShipments((prev) => prev.map((s) => (s.id === mapped.id ? mapped : s)));
+            } else if (ev === 'DELETE' && oldRow) {
+              setShipments((prev) => prev.filter((s) => s.id !== oldRow.id));
+            }
+          }
+        )
+        .subscribe();
     } else {
       // QA: subscribe to all shipments
       channel = (supabase as any)
@@ -407,6 +454,7 @@ try {
       notes: r.notes ?? undefined,
       status: r.status,
       exporterId: r.exporter_id,
+      importerId: r.importer_id ?? undefined,
       createdAt: r.created_at,
       qualityCriterion: r.quality_criteria ?? undefined,
       inspectionComments: r.inspection_comments ?? undefined,

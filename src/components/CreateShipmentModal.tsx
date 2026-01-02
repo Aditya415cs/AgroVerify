@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import { useApp } from "@/context/AppContext";
 import { toast } from "sonner";
 
@@ -26,6 +35,9 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
   const { user, fetchShipments, addShipment } = useApp();
 
   const [loading, setLoading] = useState(false);
+  const [importers, setImporters] = useState<any[]>([]);
+  const [selectedImporterId, setSelectedImporterId] = useState<string>("");
+
 
   const [formData, setFormData] = useState({
     productName: "",
@@ -49,11 +61,39 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
       notes: "",
       criterionName: "Moisture Content",
     });
+useEffect(() => {
+  const fetchImporters = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, name, organization")
+      .eq("role", "importer")
+      .order("name");
+
+    if (error) {
+      toast.error("Failed to load importers");
+      return;
+    }
+
+    setImporters(data || []);
+  };
+
+  fetchImporters();
+}, []);
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.productName || !formData.quantity || !formData.origin || !formData.referenceId ||!formData.price ) {
+    if (
+  !formData.productName ||
+  !formData.quantity ||
+  !formData.origin ||
+  !formData.referenceId ||
+  !formData.price ||
+  !selectedImporterId
+)   {
+ 
       toast.error("Please fill in all required fields");
       return;
     }
@@ -134,6 +174,8 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
         status: "Pending Inspection",
         exporter_id: supaUser.id, // use Supabase auth UUID
         quality_criteria: { name: formData.criterionName },
+        importer_id: selectedImporterId,
+
       };
 
       const { data, error } = await (supabase as any)
@@ -250,6 +292,8 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
             <Label htmlFor="referenceId">
               Reference ID <span className="text-destructive">*</span>
             </Label>
+
+
             <Input
               id="referenceId"
               value={formData.referenceId}
@@ -258,6 +302,36 @@ const CreateShipmentModal = ({ open, onOpenChange }: CreateShipmentModalProps) =
               required
             />
           </div>
+                      {/* IMPORTER SELECTION */}
+<div className="space-y-2">
+  <Label htmlFor="importer">
+    Select Importer <span className="text-destructive">*</span>
+  </Label>
+
+  <Select
+    value={selectedImporterId}
+    onValueChange={(value) => setSelectedImporterId(value)}
+  >
+    <SelectTrigger id="importer">
+      <SelectValue placeholder="Choose an importer" />
+    </SelectTrigger>
+
+    <SelectContent className="max-h-60 overflow-y-auto">
+      {importers.map((importer) => (
+        <SelectItem key={importer.id} value={importer.id}>
+          <div className="flex flex-col">
+            <span className="font-medium">{importer.name}</span>
+            {importer.organization && (
+              <span className="text-xs text-muted-foreground">
+                {importer.organization}
+              </span>
+            )}
+          </div>
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+</div>
 
           {/* QUALITY CRITERION */}
           <div className="space-y-2">

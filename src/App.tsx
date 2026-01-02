@@ -16,6 +16,7 @@ import CertificateDetail from "./pages/CertificateDetail";
 import Verify from "./pages/Verify";
 import NotFound from "./pages/NotFound";
 import CertificationD from '@/pages/CertificationD';
+import ImporterDashboard from "@/pages/ImporterDashboard";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,8 @@ const App = () => (
                 <Route path="/verify" element={<Verify />} />
                 <Route path="*" element={<NotFound />} />
                 <Route path="/certification/:id" element={<CertificationD />} />
+                <Route path="/importer" element={<ImporterDashboard />} />
+
               </Routes>
             </main>
           </div>
