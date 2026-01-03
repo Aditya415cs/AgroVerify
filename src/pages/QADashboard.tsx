@@ -122,6 +122,7 @@ const QADashboard = () => {
                       <TableHead>Status</TableHead>
                       <TableHead>Inspected</TableHead>
                       <TableHead>Action</TableHead>
+                      <TableHead>VC Issue</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -141,6 +142,37 @@ const QADashboard = () => {
                           <Button variant="outline" size="sm" asChild>
                             <Link to={`/qa/inspection/${shipment.id}`}>View</Link>
                           </Button>
+                        </TableCell>
+                        <TableCell>
+                          {shipment.status === "Certificate Issued" &&
+ shipment.vc_status !== "issued" && (
+  <Button
+    size="sm"
+    onClick={async () => {
+      try {
+        const res = await fetch("https://issue-vc-worker.adityasharma08-2006.workers.dev/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ shipmentId: shipment.id }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        alert("VC Issued Successfully");
+        
+      } catch (err: any) {
+        alert(err.message);
+      }
+    }}
+  >
+    Issue VC
+  </Button>
+)}
+
+
                         </TableCell>
                       </TableRow>
                     ))}
