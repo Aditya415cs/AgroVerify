@@ -26,7 +26,9 @@ export interface Shipment {
   inspectionComments?: string;
   inspectedAt?: string;
   inspectorId?: string;
-    supportingDocuments?: string[];
+  supportingDocuments?: string[];
+  vc_status?: string;
+  vc_id?: string;
 }
 
 export interface Certificate { [k: string]: any; }
@@ -97,6 +99,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         inspectedAt: r.inspected_at ?? undefined,
         inspectorId: r.inspector_id ?? undefined,
         supportingDocuments: r.supporting_documents ?? undefined,
+        vc_status: r.vc_status ?? undefined,
+        vc_id: r.vc_id ?? undefined,
+
       })) as Shipment[];
 
       setShipments(mapped);

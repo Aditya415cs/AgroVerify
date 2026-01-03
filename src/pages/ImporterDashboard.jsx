@@ -9,6 +9,8 @@ import StatusBadge from '@/components/StatusBadge';
 const ImporterDashboard = () => {
   const navigate = useNavigate();
   const { user, shipments } = useApp();
+  
+
 
   useEffect(() => {
     if (!user || user.role !== 'importer') {
@@ -77,11 +79,40 @@ const ImporterDashboard = () => {
                           <StatusBadge status={status} />
                         </TableCell>
                         <TableCell>{new Date(created).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <Button variant="outline" size="sm" asChild>
-                            <Link to={`/exporter/shipment/${id}`}>View</Link>
-                          </Button>
-                        </TableCell>
+<TableCell className="flex gap-2">
+  <Button variant="outline" size="sm" asChild>
+    <Link to={`/exporter/shipment/${id}`}>View</Link>
+  </Button>
+
+  {shipment.status === "Certificate Issued" &&
+    shipment.vc_status === "issued" && (
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={async () => {
+          try {
+            const res = await fetch("http://127.0.0.1:8787/verify", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ shipmentId: id }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Verification failed");
+
+            alert("✅ VC Verified Successfully");
+          } catch (err) {
+            alert("❌ " + err.message);
+          }
+        }}
+      >
+        Verify VC
+      </Button>
+    )}
+</TableCell>
+
                       </TableRow>
                     );
                   })}
