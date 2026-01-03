@@ -150,7 +150,7 @@ const QADashboard = () => {
     size="sm"
     onClick={async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8787", {
+        const res = await fetch("https://issue-vc-worker.adityasharma08-2006.workers.dev/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

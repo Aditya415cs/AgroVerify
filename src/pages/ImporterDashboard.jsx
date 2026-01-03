@@ -91,7 +91,7 @@ const ImporterDashboard = () => {
         variant="secondary"
         onClick={async () => {
           try {
-            const res = await fetch("http://127.0.0.1:8787/verify", {
+            const res = await fetch("https://issue-vc-worker.adityasharma08-2006.workers.dev/", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
