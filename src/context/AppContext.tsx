@@ -21,6 +21,7 @@ export interface Shipment {
   status: ShipmentStatus;
   exporterId: string;
   importerId?: string;
+  reported?: boolean;
   createdAt: string;
   qualityCriterion?: QualityCriterion | null;
   inspectionComments?: string;
@@ -93,6 +94,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         status: r.status,
         exporterId: r.exporter_id,
         importerId: r.importer_id ?? undefined,
+        reported: r.reported ?? false,
         createdAt: r.created_at,
         qualityCriterion: r.quality_criteria ?? undefined,
         inspectionComments: r.inspection_comments ?? undefined,
@@ -142,6 +144,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (updates.inspectionComments !== undefined) payload.inspection_comments = updates.inspectionComments ?? null;
     if (updates.inspectedAt !== undefined) payload.inspected_at = updates.inspectedAt;
     if (updates.inspectorId !== undefined) payload.inspector_id = updates.inspectorId;
+    if (updates.reported !== undefined) payload.reported = updates.reported;
 
     // If there is no payload to send, we're done (local-only change)
     if (Object.keys(payload).length === 0) return;
@@ -460,6 +463,7 @@ try {
       status: r.status,
       exporterId: r.exporter_id,
       importerId: r.importer_id ?? undefined,
+      reported: r.reported ?? false,
       createdAt: r.created_at,
       qualityCriterion: r.quality_criteria ?? undefined,
       inspectionComments: r.inspection_comments ?? undefined,

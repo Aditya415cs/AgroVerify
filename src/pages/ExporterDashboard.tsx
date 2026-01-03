@@ -82,7 +82,7 @@ const ExporterDashboard = () => {
           </Button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-4 mb-8">
+        <div className="grid gap-6 md:grid-cols-3 mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total Shipments</CardDescription>
@@ -95,15 +95,6 @@ const ExporterDashboard = () => {
               <CardDescription>Pending Inspection</CardDescription>
               <CardTitle className="text-3xl">
                 {myShipments.filter((s) => (s as any).status === 'Pending Inspection').length}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Inspected - Pass</CardDescription>
-              <CardTitle className="text-3xl">
-                {myShipments.filter((s) => (s as any).status === 'Inspected - Pass').length}
               </CardTitle>
             </CardHeader>
           </Card>

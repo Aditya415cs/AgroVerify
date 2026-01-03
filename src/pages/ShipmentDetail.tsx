@@ -67,6 +67,11 @@ const ShipmentDetail = () => {
                   <StatusBadge status={shipment.status} />
                 </div>
               </CardHeader>
+              {shipment.reported && (
+                <div className="px-6 pb-4">
+                  <p className="text-sm font-medium text-destructive">Shipment reported</p>
+                </div>
+              )}
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-4">

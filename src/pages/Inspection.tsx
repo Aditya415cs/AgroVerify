@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,7 @@ const Inspection = () => {
 
   const [supportingFiles, setSupportingFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!user || user.role !== 'qa') {
@@ -147,6 +148,29 @@ const Inspection = () => {
     navigate('/qa/dashboard');
   };
 
+  const handleReport = async () => {
+    try {
+      // mark shipment as reported in DB
+      const ok = await updateShipment(shipment.id, { reported: true } as any);
+      if (!ok) {
+        toast.error('Failed to mark shipment as reported');
+      } else {
+        toast.success('Shipment marked as reported');
+      }
+    } catch (e) {
+      console.error('report error', e);
+      toast.error('Failed to report shipment');
+    }
+
+    // open external reporting site in new tab
+    try {
+      window.open('https://www.ppqs.gov.in/en', '_blank');
+    } catch (e) {
+      // fallback
+      location.href = 'https://www.ppqs.gov.in/en';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -165,6 +189,11 @@ const Inspection = () => {
               <StatusBadge status={shipment.status} />
             </div>
           </CardHeader>
+          {shipment.reported && (
+            <div className="px-6 pb-4">
+              <p className="text-sm font-medium text-destructive">Shipment reported</p>
+            </div>
+          )}
           <CardContent>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
@@ -269,6 +298,13 @@ const Inspection = () => {
                       </Label>
                     </div>
                   </RadioGroup>
+
+                  {formData.result === 'Fail' && (
+                    <div className="mt-3">
+                      <Button variant="destructive" onClick={handleReport} className="mb-2">Report</Button>
+                      <p className="text-xs text-destructive">(In case of harmful substances found)</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -293,6 +329,7 @@ const Inspection = () => {
                     <p className="text-xs text-muted-foreground mt-1">You can upload multiple files (PDF, JPG, PNG)</p>
                     <div className="mt-3">
                       <input
+                        ref={fileInputRef}
                         type="file"
                         multiple
                         onChange={(e) => {
@@ -300,8 +337,14 @@ const Inspection = () => {
                           if (!files) return;
                           setSupportingFiles(Array.from(files));
                         }}
-                        className="mx-auto"
+                        className="hidden"
                       />
+                      <div className="flex justify-center">
+                        <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()}>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Choose files
+                        </Button>
+                      </div>
                     </div>
 
                     {supportingFiles.length > 0 && (
