@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, CheckCircle, XCircle, QrCode } from 'lucide-react';
 import jsQR from 'jsqr';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,17 +10,25 @@ import { supabase } from '@/integrations/supabase/client';
 
 const Verify = () => {
   const navigate = useNavigate();
+
   const [certificateId, setCertificateId] = useState('');
-  const [verificationResult, setVerificationResult] = useState<'success' | 'fail' | null>(null);
+  const [verificationResult, setVerificationResult] =
+    useState<'success' | 'fail' | null>(null);
   const [certificate, setCertificate] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // ✅ IMPORTANT: fix Supabase typing issue
+  const supabaseAny = supabase as any;
 
   const getResultLabel = (status: string): string => {
     if (status === 'Inspected - Pass' || status === 'Certificate Issued') return 'Pass';
     if (status === 'Inspected - Fail') return 'Fail';
     return status;
   };
+
+  /* ================= VERIFY ================= */
 
   const verifyCertificateById = async (id: string) => {
     const trimmed = id.trim();
@@ -29,35 +38,31 @@ const Verify = () => {
     setVerificationResult(null);
     setCertificate(null);
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAny
       .from('shipments')
       .select('*')
       .eq('id', trimmed)
       .maybeSingle();
 
     if (error || !data) {
-      console.error('Verification error / shipment not found:', error);
       setVerificationResult('fail');
-      setCertificate(null);
       setLoading(false);
       return;
     }
 
     if (data.status !== 'Certificate Issued') {
       setVerificationResult('fail');
-      setCertificate(null);
       setLoading(false);
       return;
     }
 
-    const certObj = {
+    setCertificate({
       id: trimmed,
       shipmentId: data.id,
       result: getResultLabel(data.status),
-      issuedAt: data.inspected_at ?? (data as any).updated_at ?? data.created_at,
-    };
+      issuedAt: data.inspected_at ?? data.updated_at ?? data.created_at,
+    });
 
-    setCertificate(certObj);
     setVerificationResult('success');
     setLoading(false);
   };
@@ -73,21 +78,39 @@ const Verify = () => {
     }
   };
 
-  const handleQrDecode = async (result: string) => {
-    try {
-      const parsed = JSON.parse(result);
-      if (parsed.id) {
-        setCertificateId(parsed.id);
-        await verifyCertificateById(parsed.id);
-        return;
-      }
-    } catch {
-      console.warn('QR is not JSON, using raw value as ID');
+  /* ================= QR NORMALIZATION ================= */
+
+  const extractIdFromQr = (raw: string): string | null => {
+    // URL QR → take last segment
+    if (raw.startsWith('http')) {
+      const parts = raw.split('/');
+      return parts[parts.length - 1] || null;
     }
 
-    setCertificateId(result);
-    await verifyCertificateById(result);
+    // JSON QR → { "id": "XXX" }
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed?.id) return parsed.id;
+    } catch {
+      // not JSON
+    }
+
+    // Plain text
+    return raw.trim() || null;
   };
+
+  const handleQrDecode = async (raw: string) => {
+    const extractedId = extractIdFromQr(raw);
+    if (!extractedId) {
+      alert('Invalid QR code');
+      return;
+    }
+
+    setCertificateId(extractedId);
+    await verifyCertificateById(extractedId);
+  };
+
+  /* ================= IMAGE QR SCAN ================= */
 
   const handleUploadQrClick = () => {
     fileInputRef.current?.click();
@@ -108,16 +131,16 @@ const Verify = () => {
 
         const ctx = canvas.getContext('2d');
         if (!ctx) {
-          alert('Could not read this image.');
+          alert('Could not read image');
           return;
         }
 
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
         const code = jsQR(imageData.data, imageData.width, imageData.height);
 
-        if (code && code.data) {
+        if (code?.data) {
           await handleQrDecode(code.data);
         } else {
           alert('Could not detect a QR code in this image.');
@@ -131,150 +154,89 @@ const Verify = () => {
     e.target.value = '';
   };
 
+  /* ================= UI ================= */
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-muted">
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-4 text-foreground">Verify Certificate</h1>
-            <p className="text-lg text-muted-foreground">
-              Enter a certificate ID or upload a QR code image to verify authenticity
-            </p>
-          </div>
+      <div className="container mx-auto px-4 py-16 max-w-2xl">
 
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Certificate Verification</CardTitle>
-              <CardDescription>Check if a certificate is valid and authentic</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleVerify} className="space-y-4">
-                <div className="space-y-2">
-                  <Input
-                    placeholder="Enter Certificate ID (e.g., CERT-001)"
-                    value={certificateId}
-                    onChange={(e) => {
-                      setCertificateId(e.target.value);
-                      setVerificationResult(null);
-                    }}
-                    className="text-center font-mono"
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <Button type="submit" className="flex-1" disabled={loading}>
-                    <Search className="h-4 w-4 mr-2" />
-                    {loading ? 'Verifying…' : 'Verify Certificate'}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-4">Verify Certificate</h1>
+          <p className="text-muted-foreground">
+            Enter a shipment ID or upload a QR code
+          </p>
+        </div>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Certificate Verification</CardTitle>
+            <CardDescription>
+              Check if a certificate is valid and authentic
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleVerify} className="space-y-4">
+              <Input
+                placeholder="Enter Shipment ID"
+                value={certificateId}
+                onChange={(e) => {
+                  setCertificateId(e.target.value);
+                  setVerificationResult(null);
+                }}
+                className="text-center font-mono"
+              />
+
+              <div className="flex gap-3">
+                <Button type="submit" className="flex-1" disabled={loading}>
+                  <Search className="h-4 w-4 mr-2" />
+                  {loading ? 'Verifying…' : 'Verify'}
+                </Button>
+
+                <Button type="button" variant="outline" onClick={handleUploadQrClick}>
+                  <QrCode className="h-4 w-4 mr-2" />
+                  Upload QR
+                </Button>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        {verificationResult === 'success' && certificate && (
+          <Card className="border-success/50">
+            <CardContent className="pt-6">
+              <div className="flex gap-4">
+                <CheckCircle className="h-8 w-8 text-success" />
+                <div className="flex-1">
+                  <p className="font-semibold text-success">Certificate Valid</p>
+                  <Button onClick={handleViewCertificate} className="w-full mt-4">
+                    View Full Certificate Details
                   </Button>
-                  <Button type="button" variant="outline" onClick={handleUploadQrClick}>
-                    <QrCode className="h-4 w-4 mr-2" />
-                    Upload QR
-                  </Button>
-                  {/* hidden file input */}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
                 </div>
-              </form>
+              </div>
             </CardContent>
           </Card>
+        )}
 
-          {verificationResult === 'success' && certificate && (
-            <Card className="border-success/50 animate-in fade-in slide-in-from-bottom-4">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle className="h-6 w-6 text-success" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-success mb-2">Certificate Valid</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      This certificate has been verified and is authentic.
-                    </p>
-                    <div className="space-y-2 bg-muted/50 p-4 rounded-lg mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium">Certificate ID:</span>
-                        <span className="text-muted-foreground font-mono">{certificate.id}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium">Shipment ID:</span>
-                        <span className="text-muted-foreground">{certificate.shipmentId}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium">Result:</span>
-                        <span className="text-success font-medium">{certificate.result}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium">Issued:</span>
-                        <span className="text-muted-foreground">
-                          {new Date(certificate.issuedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                    <Button onClick={handleViewCertificate} className="w-full">
-                      View Full Certificate Details
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {verificationResult === 'fail' && (
-            <Card className="border-destructive/50 animate-in fade-in slide-in-from-bottom-4">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                    <XCircle className="h-6 w-6 text-destructive" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-destructive mb-2">Certificate Not Found</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      The certificate ID you entered could not be found in our system. Please check the ID and try
-                      again.
-                    </p>
-                    <div className="bg-destructive/5 p-4 rounded-lg">
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Possible reasons:</strong>
-                      </p>
-                      <ul className="text-sm text-muted-foreground list-disc list-inside mt-2 space-y-1">
-                        <li>The certificate ID was entered incorrectly</li>
-                        <li>The certificate does not exist</li>
-                        <li>The certificate may have been revoked</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {!verificationResult && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Sample Certificates</CardTitle>
-                <CardDescription>Try verifying these sample certificate IDs</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => {
-                      setCertificateId('CERT-001');
-                      setVerificationResult(null);
-                    }}
-                    className="w-full text-left px-4 py-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                  >
-                    <p className="font-mono text-sm font-medium">CERT-001</p>
-                    <p className="text-xs text-muted-foreground mt-1">Sample certificate for Product B</p>
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        {verificationResult === 'fail' && (
+          <Card className="border-destructive/50">
+            <CardContent className="pt-6">
+              <div className="flex gap-4">
+                <XCircle className="h-8 w-8 text-destructive" />
+                <p className="font-semibold text-destructive">
+                  Certificate Not Found
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

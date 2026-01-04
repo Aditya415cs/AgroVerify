@@ -91,51 +91,81 @@ const CertificationD = () => {
     );
   };
 
-  const handleDownload = async () => {
-    if (!shipment) return;
+const handleDownload = async () => {
+  if (!shipment) return;
 
-    const { default: jsPDF } = await import("jspdf");
-    const qrcodeModule = await import("qrcode");
+  const { default: jsPDF } = await import("jspdf");
+  const qrcodeModule = await import("qrcode");
+  const QRCode: any = (qrcodeModule as any).default || qrcodeModule;
 
-    const QRCode: any = (qrcodeModule as any).default || qrcodeModule;
+  const doc = new jsPDF("p", "mm", "a4");
 
-    const doc = new jsPDF();
+  // Outer border
+  doc.setDrawColor(0, 120, 0);
+  doc.setLineWidth(1);
+  doc.rect(10, 10, 190, 277);
 
-    doc.setFontSize(18);
-    doc.text("QUALITY CERTIFICATE", 20, 20);
+  // Title
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.text("QUALITY CERTIFICATE", 105, 28, { align: "center" });
 
-    doc.setFontSize(12);
-    doc.text(`Shipment / Certificate ID: ${shipment.id}`, 20, 35);
-    doc.text(
-      `Created At: ${new Date(shipment.created_at).toLocaleString()}`,
-      20,
-      45
-    );
-    doc.text(`Result: ${getResultLabel(shipment.status)}`, 20, 55);
+  doc.setLineWidth(0.5);
+  doc.line(20, 32, 190, 32);
 
-    doc.text(`Product: ${shipment.product_name}`, 20, 70);
-    doc.text(`Quantity: ${shipment.quantity} ${shipment.unit}`, 20, 80);
-    doc.text(`Origin: ${shipment.origin}`, 20, 90);
-    doc.text(`Reference ID: ${shipment.reference_id}`, 20, 100);
+  // Left content
+  let y = 45;
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
 
-    if (shipment.inspected_at) {
-      doc.text(
-        `Inspected At: ${new Date(shipment.inspected_at).toLocaleString()}`,
-        20,
-        110
-      );
-    }
-
-    const qrText = buildQrData(shipment);
-    const qrDataUrl = await QRCode.toDataURL(qrText, {
-      width: 200,
-      margin: 1,
-    });
-
-    doc.addImage(qrDataUrl, "PNG", 140, 20, 50, 50);
-
-    doc.save(`certificate-${shipment.id}.pdf`);
+  const row = (label: string, value: string) => {
+    doc.setFont("helvetica", "bold");
+    doc.text(`${label}:`, 20, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(value || "-", 70, y);
+    y += 8;
   };
+
+  row("Shipment / Certificate ID", shipment.id);
+  row("Created At", new Date(shipment.created_at).toLocaleString());
+  row("Result", getResultLabel(shipment.status));
+
+  y += 4;
+
+  row("Product", shipment.product_name);
+  row("Quantity", `${shipment.quantity} ${shipment.unit}`);
+  row("Origin", shipment.origin);
+  row("Reference ID", shipment.reference_id);
+
+  if (shipment.inspected_at) {
+    row(
+      "Inspected At",
+      new Date(shipment.inspected_at).toLocaleString()
+    );
+  }
+
+  // QR Code
+  const qrText = shipment.id;
+
+  const qrDataUrl = await QRCode.toDataURL(qrText, {
+  width: 350,
+  margin: 2,
+});
+
+  doc.addImage(qrDataUrl, "PNG", 145, 40, 45, 45);
+
+  // Footer
+  doc.setFontSize(9);
+  doc.setTextColor(120);
+  doc.text(
+    "This certificate is digitally generated and verified.\nNo physical signature is required.",
+    20,
+    270
+  );
+
+  doc.save(`certificate-${shipment.id}.pdf`);
+};
+
 
   if (loading) {
     return (
